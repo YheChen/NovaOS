@@ -229,5 +229,5 @@ th {
 .empty {
   color: var(--muted);
   font-style: italic;
-  padding: 8px 0;
+  padding: 8px 12px;
 }
