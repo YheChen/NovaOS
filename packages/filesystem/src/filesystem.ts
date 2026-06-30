@@ -697,6 +697,14 @@ export function createFileSystem(deps: CreateFileSystemDeps): FileSystem {
   studentDir.children.set('README.txt', readme);
   const mainAsm = makeFile('main.asm', studentId, encoder.encode('MOV R0, 5\nSYSCALL 0\nHALT\n'));
   studentDir.children.set('main.asm', mainAsm);
+  const helloC = makeFile(
+    'hello.c',
+    studentId,
+    encoder.encode(
+      'int main() {\n  int a = 5;\n  int b = 10;\n  int c = a + b;\n  print(c);\n  return 0;\n}\n',
+    ),
+  );
+  studentDir.children.set('hello.c', helloC);
 
   const root = inodes.get(rootId) as DirectoryInode;
   const binId = makeDir('bin', rootId, readOnlyDirectoryPermissions());

@@ -10,6 +10,8 @@ import type { RegisterFileSnapshot } from './register-file';
 export interface MemoryPort {
   readByte(address: Address): Result<number>;
   readWord(address: Address): Result<number>;
+  /** Word write, used by the stack/memory instructions (PUSH/POP/CALL/STORE). */
+  writeWord(address: Address, value: number): Result<void>;
 }
 
 /** A destination for program output (the M1 `PRINT` instruction writes here). */

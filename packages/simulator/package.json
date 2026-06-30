@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@novaos/assembler": "workspace:*",
+    "@novaos/compiler": "workspace:*",
     "@novaos/cpu": "workspace:*",
     "@novaos/events": "workspace:*",
     "@novaos/kernel": "workspace:*",

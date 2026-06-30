@@ -85,7 +85,7 @@ export function createCpu(): Cpu {
     }
 
     // Execute
-    const effect = HANDLERS[instruction.opcode](instruction, registers.snapshot());
+    const effect = HANDLERS[instruction.opcode](instruction, registers.snapshot(), ctx.memory);
     if (!effect.ok) {
       return raise(ctx, vmFault('invalid-operand', pc, effect.error.message), instruction);
     }
@@ -97,6 +97,24 @@ export function createCpu(): Cpu {
       if (previous !== next) {
         registers.set(write.name, next);
         ctx.bus.publish(events.registerChangedEvent(ctx.clock.now(), write.name, previous, next));
+      }
+    }
+
+    // Memory writes (stack/store instructions). A failed write is a fault
+    // (e.g. a stack overflow that runs past the stack segment).
+    if (effect.value.memoryWrites) {
+      for (const write of effect.value.memoryWrites) {
+        const wrote = ctx.memory.writeWord(asAddress(write.address), write.value);
+        if (!wrote.ok) {
+          return raise(
+            ctx,
+            vmFault('segmentation-fault', pc, `Memory write failed: ${wrote.error.message}`),
+            instruction,
+          );
+        }
+        ctx.bus.publish(
+          events.memoryWrittenEvent(ctx.clock.now(), write.address, write.value >>> 0),
+        );
       }
     }
 
@@ -123,7 +141,8 @@ export function createCpu(): Cpu {
     }
 
     ctx.bus.publish(events.executedEvent(ctx.clock.now(), pc, instruction));
-    registers.set('pc', pc + INSTRUCTION_SIZE);
+    // Control-flow instructions set an explicit next PC; everything else advances.
+    registers.set('pc', effect.value.nextPc ?? pc + INSTRUCTION_SIZE);
 
     return { status: 'ok', cycles: effect.value.cycles, instruction, fault: null };
   }

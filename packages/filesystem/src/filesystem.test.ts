@@ -30,7 +30,7 @@ describe('FileSystem — seed tree', () => {
     const { fs } = setup();
     const home = fs.list('.', ctx());
     if (!home.ok) throw new Error(home.error.message);
-    expect(home.value.map((e) => e.name)).toEqual(['README.txt', 'main.asm']);
+    expect(home.value.map((e) => e.name)).toEqual(['README.txt', 'hello.c', 'main.asm']);
   });
 
   it('stats a seeded file', () => {

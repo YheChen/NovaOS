@@ -161,6 +161,22 @@ export function assemble(source: string, options: AssembleOptions = {}): Assembl
 
     const fields = [0, 0, 0];
     let valid = true;
+    const rangeError = (
+      value: number,
+      lo: number,
+      hi: number,
+      pos: { line: number; column: number },
+    ) => {
+      diagnostics.push(
+        diagnostic({
+          severity: 'error',
+          code: 'asm/immediate-range',
+          message: `Value ${value} is out of range (${lo}..${hi}).`,
+          source: { line: pos.line, column: pos.column },
+        }),
+      );
+      valid = false;
+    };
     spec.operands.forEach((kind, i) => {
       const operand = stmt.operands[i];
       if (!operand) {
@@ -180,19 +196,51 @@ export function assemble(source: string, options: AssembleOptions = {}): Assembl
           valid = false;
           return;
         }
-        if (operand.value < 0 || operand.value > 255) {
+        if (operand.value < 0 || operand.value > 255)
+          return rangeError(operand.value, 0, 255, operand.pos);
+        fields[i] = operand.value;
+      } else if (kind === 'imm16') {
+        if (operand.kind !== 'immediate') {
+          diagnostics.push(operandError(stmt, i, 'an immediate', operand.pos));
+          valid = false;
+          return;
+        }
+        if (operand.value < 0 || operand.value > 65535)
+          return rangeError(operand.value, 0, 65535, operand.pos);
+        fields[1] = (operand.value >>> 8) & 0xff;
+        fields[2] = operand.value & 0xff;
+      } else if (kind === 'simm') {
+        if (operand.kind !== 'immediate') {
+          diagnostics.push(operandError(stmt, i, 'an immediate', operand.pos));
+          valid = false;
+          return;
+        }
+        if (operand.value < -128 || operand.value > 127)
+          return rangeError(operand.value, -128, 127, operand.pos);
+        fields[i] = operand.value & 0xff;
+      } else if (kind === 'label') {
+        if (operand.kind !== 'label-ref') {
+          diagnostics.push(operandError(stmt, i, 'a label', operand.pos));
+          valid = false;
+          return;
+        }
+        const target = symbols.get(operand.name);
+        if (target === undefined) {
           diagnostics.push(
             diagnostic({
               severity: 'error',
-              code: 'asm/immediate-range',
-              message: `Immediate ${operand.value} is out of range (0-255).`,
+              code: 'asm/undefined-label',
+              message: `Undefined label "${operand.name}".`,
               source: { line: operand.pos.line, column: operand.pos.column },
             }),
           );
           valid = false;
           return;
         }
-        fields[i] = operand.value;
+        const rel = target - addr; // PC-relative: CPU computes pc + rel
+        if (rel < -32768 || rel > 32767) return rangeError(rel, -32768, 32767, operand.pos);
+        fields[1] = (rel >>> 8) & 0xff;
+        fields[2] = rel & 0xff;
       } else {
         diagnostics.push(
           diagnostic({
