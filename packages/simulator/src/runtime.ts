@@ -37,7 +37,11 @@ export interface NovaRuntimeOptions {
   readonly quantumTicks?: number;
   readonly seed?: number;
   readonly maxSteps?: number;
+  /** Per-process stack size. Defaults to 4 KB — enough for deep Toy C recursion. */
+  readonly stackBytes?: number;
 }
+
+const DEFAULT_STACK_BYTES = 4096;
 
 export interface SpawnOptions {
   readonly parentPid?: ProcessId | null;
@@ -103,7 +107,16 @@ export function createNovaRuntime(options: NovaRuntimeOptions = {}): NovaRuntime
   };
 
   const scheduler = makeScheduler(options.scheduler ?? 'round-robin', quantumTicks);
-  const kernel = createKernel({ bus, clock, memory, scheduler, registerPort, output, random });
+  const kernel = createKernel({
+    bus,
+    clock,
+    memory,
+    scheduler,
+    registerPort,
+    output,
+    random,
+    config: { defaultStackBytes: options.stackBytes ?? DEFAULT_STACK_BYTES },
+  });
 
   const syscallTrap: SyscallTrap = { invoke: (request) => kernel.handleSyscall(request) };
   const ctx: VmExecutionContext = { memory, bus, clock, output, syscallTrap };

@@ -13,5 +13,9 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --clean",
     "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@novaos/compiler": "workspace:*",
+    "@novaos/simulator": "workspace:*"
   }
 }

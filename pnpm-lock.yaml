@@ -168,7 +168,14 @@ importers:
         specifier: workspace:*
         version: link:../shared
 
-  packages/examples: {}
+  packages/examples:
+    devDependencies:
+      '@novaos/compiler':
+        specifier: workspace:*
+        version: link:../compiler
+      '@novaos/simulator':
+        specifier: workspace:*
+        version: link:../simulator
 
   packages/filesystem:
     dependencies:
