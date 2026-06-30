@@ -81,7 +81,24 @@ importers:
         specifier: workspace:*
         version: link:../testing
 
-  packages/debugger: {}
+  packages/debugger:
+    dependencies:
+      '@novaos/assembler':
+        specifier: workspace:*
+        version: link:../assembler
+      '@novaos/cpu':
+        specifier: workspace:*
+        version: link:../cpu
+      '@novaos/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@novaos/simulator':
+        specifier: workspace:*
+        version: link:../simulator
+    devDependencies:
+      '@novaos/compiler':
+        specifier: workspace:*
+        version: link:../compiler
 
   packages/events:
     dependencies:

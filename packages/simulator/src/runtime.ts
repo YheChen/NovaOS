@@ -1,10 +1,20 @@
 import { createCpu } from '@novaos/cpu';
-import type { CpuStepResult, SyscallTrap, VmExecutionContext } from '@novaos/cpu';
+import type {
+  CpuStepResult,
+  RegisterFileSnapshot,
+  SyscallTrap,
+  VmExecutionContext,
+} from '@novaos/cpu';
 import { createMemory, DEFAULT_RAM_BYTES } from '@novaos/memory';
 import type { MemoryMapSnapshot } from '@novaos/memory';
 import { createEventBus, createEventRecorder } from '@novaos/events';
 import type { DomainEvent } from '@novaos/events';
-import { createSimulationClock, createSeededRandom, type ProcessId } from '@novaos/shared';
+import {
+  createSimulationClock,
+  createSeededRandom,
+  asAddress,
+  type ProcessId,
+} from '@novaos/shared';
 import { createFifoScheduler, createRoundRobinScheduler } from '@novaos/scheduler';
 import type { Scheduler, SchedulerSnapshot } from '@novaos/scheduler';
 import { createKernel } from '@novaos/kernel';
@@ -46,6 +56,10 @@ export interface NovaRuntime {
   run(): RuntimeRunResult;
   getKernel(): Kernel;
   getStatus(): KernelStatus;
+  /** Live CPU register snapshot (read-only; for the debugger). */
+  getRegisters(): RegisterFileSnapshot;
+  /** Read a 32-bit word from memory (read-only; for the debugger). Null if out of bounds. */
+  readWord(address: number): number | null;
   getOutput(): string;
   getOutputLines(): string[];
   getEvents(): readonly DomainEvent[];
@@ -158,6 +172,11 @@ export function createNovaRuntime(options: NovaRuntimeOptions = {}): NovaRuntime
 
     getKernel: () => kernel,
     getStatus: () => kernel.getStatus(),
+    getRegisters: () => cpu.getRegisters(),
+    readWord: (address) => {
+      const result = memory.readWord(asAddress(address));
+      return result.ok ? result.value : null;
+    },
     getOutput: () => output.getText(),
     getOutputLines: () => output.getLines(),
     getEvents: () => recorder.getEvents(),
