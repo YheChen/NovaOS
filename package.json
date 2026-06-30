@@ -1,0 +1,49 @@
+{
+  "name": "novaos",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "NovaOS — a browser-based interactive operating systems laboratory.",
+  "packageManager": "pnpm@10.31.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run tests/integration --passWithNoTests",
+    "test:golden": "vitest run tests/golden --passWithNoTests",
+    "test:replay": "vitest run tests/replay --passWithNoTests",
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test --grep @a11y",
+    "check:arch": "tsx scripts/check-architecture.ts",
+    "validate": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm check:arch"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@playwright/test": "^1.49.1",
+    "@types/node": "^22.10.5",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.4.2",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.19.0",
+    "vitest": "^2.1.8"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

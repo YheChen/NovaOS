@@ -1,0 +1,24 @@
+{
+  "name": "@novaos/cpu",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Register file, instruction decode/execute, flags, and CPU faults.",
+  "sideEffects": false,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --clean",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@novaos/events": "workspace:*",
+    "@novaos/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@novaos/testing": "workspace:*"
+  }
+}
