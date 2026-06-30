@@ -1,6 +1,6 @@
 # Task Registry & Status Dashboard
 
-Status as of the Milestone 8 checkpoint. Legend: ✅ done · 🟡 partial · ⬜ planned.
+Status as of the v1.0.0 release (all milestones M0–M10 complete). Legend: ✅ done · 🟡 partial · ⬜ planned.
 
 ## Milestone status
 
@@ -15,8 +15,8 @@ Status as of the Milestone 8 checkpoint. Legend: ✅ done · 🟡 partial · ⬜
 | M6        | Debugger, breakpoints, watches, timeline, replay                          | ✅     | `packages/debugger`; PR #4                                   |
 | M7        | Workspace UI (Vite React SPA)                                             | ✅     | `apps/web`; ADR-0005; PR #5                                  |
 | M8        | Orchestration framework (this directory)                                  | ✅     | `docs/orchestration`                                         |
-| M9        | Testing & DevOps hardening                                                | ⬜     | see `docs/specs/09`                                          |
-| M10       | Public v1.0 launch (README, release, deploy)                              | ⬜     | see `docs/specs/10`                                          |
+| M9        | Testing & DevOps hardening                                                | ✅     | integration/golden/replay suites + CI gates; PR #7           |
+| M10       | Public v1.0 launch (README, release, deploy)                              | ✅     | examples, README, v1.0.0 release, live Pages deploy; PR #8   |
 
 ## 50-agent roster → delivered work
 
@@ -95,9 +95,9 @@ omitted (the integration lead reviews all).
 
 ### Group H — Quality, Performance, Release
 
-| 48 Testing & QA | Vitest + Playwright, `scripts/check-architecture.ts` | 🟡 (M9) |
-| 49 Performance/A11y | (M9/M10) | ⬜ |
-| 50 Release/Demo | (M10) | ⬜ |
+| 48 Testing & QA | Vitest + Playwright + integration/golden/replay suites, `scripts/check-architecture.ts` | ✅ |
+| 49 Performance/A11y | (property/fuzz, a11y audit, perf budgets) | ⬜ (post-v1.0) |
+| 50 Release/Demo | README, release notes, v1.0.0 release, Pages deploy | ✅ |
 
 ## Open follow-ups (tracked, not blocking)
 
