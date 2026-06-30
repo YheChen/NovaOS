@@ -1,10 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright skeleton. The NovaOS web app is not implemented until Milestone 7,
- * so this configuration exists to keep the E2E harness wired and green. The
- * `webServer` block is intentionally commented out and will be enabled once
- * `apps/web` serves a real workspace.
+ * Playwright drives the built NovaOS workspace SPA (Milestone 7). The webServer
+ * block builds `apps/web` and serves it with `vite preview` on port 3000.
  */
 export default defineConfig({
   testDir: './tests/e2e',
@@ -19,9 +17,10 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  // webServer: {
-  //   command: 'pnpm --filter @novaos/web dev',
-  //   url: 'http://localhost:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
+  webServer: {
+    command: 'pnpm --filter @novaos/web build && pnpm --filter @novaos/web preview',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
+  },
 });

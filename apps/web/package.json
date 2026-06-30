@@ -3,15 +3,27 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "NovaOS browser application shell.",
-  "sideEffects": false,
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "exports": {
-    ".": "./src/index.ts"
-  },
+  "description": "NovaOS browser workspace (Vite + React SPA).",
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --clean",
-    "typecheck": "tsc --noEmit"
+    "dev": "vite",
+    "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "preview": "vite preview --port 3000 --strictPort",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@novaos/assembler": "workspace:*",
+    "@novaos/compiler": "workspace:*",
+    "@novaos/cpu": "workspace:*",
+    "@novaos/debugger": "workspace:*",
+    "@novaos/shared": "workspace:*",
+    "@novaos/simulator": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.21"
   }
 }
