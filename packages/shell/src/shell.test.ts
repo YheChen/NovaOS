@@ -89,7 +89,7 @@ describe('shell — acceptance command sequence', () => {
     const h = harness();
 
     expect(h.text('pwd')).toEqual(['/home/student']);
-    expect(h.text('ls')).toEqual(['README.txt  main.asm']);
+    expect(h.text('ls')).toEqual(['README.txt  hello.c  main.asm']);
 
     expect(h.run('mkdir demos').exitCode).toBe(0);
     expect(h.run('cd demos').exitCode).toBe(0);

@@ -9,6 +9,7 @@ export const CpuEventType = {
   Executed: 'cpu.instruction.executed',
   RegisterChanged: 'cpu.register.changed',
   FlagsChanged: 'cpu.flags.changed',
+  MemoryWritten: 'cpu.memory.written',
   Output: 'cpu.output',
   Halted: 'cpu.halted',
   FaultRaised: 'cpu.fault.raised',
@@ -36,6 +37,10 @@ export interface OutputPayload {
   register: RegisterName;
   value: number;
   text: string;
+}
+export interface MemoryWrittenPayload {
+  address: number;
+  value: number;
 }
 export interface HaltedPayload {
   pc: number;
@@ -93,6 +98,9 @@ export const outputEvent = (
   text: string,
 ): EventInput =>
   cpuEvent(CpuEventType.Output, tick, { register, value, text } satisfies OutputPayload);
+
+export const memoryWrittenEvent = (tick: SimTime, address: number, value: number): EventInput =>
+  cpuEvent(CpuEventType.MemoryWritten, tick, { address, value } satisfies MemoryWrittenPayload);
 
 export const haltedEvent = (tick: SimTime, pc: number): EventInput =>
   cpuEvent(CpuEventType.Halted, tick, { pc } satisfies HaltedPayload);

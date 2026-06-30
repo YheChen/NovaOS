@@ -63,6 +63,22 @@ export function gprNameFromIndex(index: number): GprName | undefined {
   return GPR_NAMES[index];
 }
 
+/**
+ * Map an instruction operand register index to a register name. Indices 0-7 are
+ * the general-purpose registers; 8 is SP and 9 is BP (addressable by the M5
+ * stack/memory instructions). Any other index is invalid.
+ */
+export function registerNameFromIndex(index: number): RegisterName | undefined {
+  if (index >= 0 && index < GPR_NAMES.length) return GPR_NAMES[index];
+  if (index === 8) return 'sp';
+  if (index === 9) return 'bp';
+  return undefined;
+}
+
+/** The operand index for SP/BP (used by the assembler and codegen). */
+export const SP_INDEX = 8;
+export const BP_INDEX = 9;
+
 export interface RegisterFile {
   reset(initial?: Partial<RegisterFileSnapshot>): void;
   get(name: RegisterName): number;

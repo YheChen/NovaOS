@@ -59,7 +59,14 @@ importers:
         specifier: workspace:*
         version: link:../shared
 
-  packages/compiler: {}
+  packages/compiler:
+    dependencies:
+      '@novaos/assembler':
+        specifier: workspace:*
+        version: link:../assembler
+      '@novaos/shared':
+        specifier: workspace:*
+        version: link:../shared
 
   packages/cpu:
     dependencies:
@@ -158,6 +165,9 @@ importers:
       '@novaos/assembler':
         specifier: workspace:*
         version: link:../assembler
+      '@novaos/compiler':
+        specifier: workspace:*
+        version: link:../compiler
       '@novaos/cpu':
         specifier: workspace:*
         version: link:../cpu
