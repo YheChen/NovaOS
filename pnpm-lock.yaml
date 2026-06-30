@@ -11,6 +11,30 @@ importers:
       '@eslint/js':
         specifier: ^9.17.0
         version: 9.39.4
+      '@novaos/assembler':
+        specifier: workspace:*
+        version: link:packages/assembler
+      '@novaos/compiler':
+        specifier: workspace:*
+        version: link:packages/compiler
+      '@novaos/debugger':
+        specifier: workspace:*
+        version: link:packages/debugger
+      '@novaos/filesystem':
+        specifier: workspace:*
+        version: link:packages/filesystem
+      '@novaos/shared':
+        specifier: workspace:*
+        version: link:packages/shared
+      '@novaos/shell':
+        specifier: workspace:*
+        version: link:packages/shell
+      '@novaos/simulator':
+        specifier: workspace:*
+        version: link:packages/simulator
+      '@novaos/terminal':
+        specifier: workspace:*
+        version: link:packages/terminal
       '@playwright/test':
         specifier: ^1.49.1
         version: 1.61.1

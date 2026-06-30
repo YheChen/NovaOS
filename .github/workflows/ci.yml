@@ -44,6 +44,15 @@ jobs:
       - name: Unit tests
         run: pnpm test
 
+      - name: Integration tests
+        run: pnpm test:integration
+
+      - name: Golden tests
+        run: pnpm test:golden
+
+      - name: Replay tests
+        run: pnpm test:replay
+
       - name: Build
         run: pnpm build
 
