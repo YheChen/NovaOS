@@ -1,6 +1,6 @@
 {
   "schema": "novaos-handover/v1",
-  "generatedAtMilestone": "M4 complete",
+  "generatedAtMilestone": "M7 complete (M5 Toy C compiler, M6 debugger, M7 workspace UI all merged)",
   "purpose": "Context handover so a fresh session can continue building NovaOS milestone-by-milestone without re-deriving prior decisions. Read this first, then docs/specs and docs/adr.",
 
   "project": {
@@ -15,19 +15,24 @@
   "currentState": {
     "git": {
       "branch": "main",
-      "head": "31aabca",
-      "headMessage": "m2-m4",
-      "priorCommit": "2c699b8 milestone 1",
+      "head": "47c1cfa",
+      "headMessage": "feat(web): Milestone 7 — browser workspace UI (Vite React SPA) (#5)",
+      "workflow": "Each milestone: branch off main, implement+test, PR, wait for CI green, squash-merge, pull main. Merged PRs #3 (M5), #4 (M6), #5 (M7).",
       "workingTree": "clean"
     },
+    "testCount": "229 unit tests (vitest) + 4 Playwright e2e",
+    "adrsAdded": "0004 (ISA extension + calling convention for Toy C), 0005 (workspace UI = Vite React SPA not Next.js)",
     "milestonesComplete": [
       "M0 foundation",
       "M1 minimal VM",
       "M2 kernel/process/scheduler",
       "M3 filesystem/shell/terminal",
-      "M4 assembler/program-runner"
+      "M4 assembler/program-runner",
+      "M5 Toy C compiler (@novaos/compiler: lexer/parser/sema/IR/optimize/codegen/source-map; ISA extended in cpu+assembler per ADR-0004; .c wired into runner; hello.c seeded)",
+      "M6 debugger (@novaos/debugger: run control, stepping into/over/out, 5 breakpoint kinds, safe watch evaluator, call-stack via BP chain, timeline, time-travel replay)",
+      "M7 workspace UI (apps/web Vite+React SPA: editor, compile inspector, run output, live debugger panel; Playwright e2e drives built SPA)"
     ],
-    "nextMilestone": "M5 Toy C compiler",
+    "nextMilestone": "M8 agent orchestration (spec 08); then M9 testing/devops (spec 09); then M10 public v1.0 launch (spec 10). User wants M8-M10 done overnight.",
     "tests": { "total": 174, "command": "pnpm test", "status": "all passing" },
     "gates": "pnpm validate is green (format:check, lint, typecheck, test, build, check:arch all pass).",
     "buildArtifacts": "tsup dist/ is gitignored; tests/build run from TS source via vitest/tsc."
