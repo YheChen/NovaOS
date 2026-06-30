@@ -1,16 +1,34 @@
 import { ok, err, novaError, asByte } from '@novaos/shared';
 import type { Result, Address, Byte } from '@novaos/shared';
+import {
+  segmentId,
+  defaultPermissions,
+  type MemorySegment,
+  type MemoryMapSnapshot,
+  type ReserveRequest,
+  type SegmentId,
+} from './segments';
 
 /**
- * The Milestone 1 memory core: a flat, byte-addressable, little-endian RAM with
- * bounds-checked access. Memory segments, the allocator, and read/write events
- * arrive in Milestone 2; for now this holds program code and is fetched by the CPU.
+ * The memory core: a flat, byte-addressable, little-endian RAM with
+ * bounds-checked access plus a first-fit segment allocator. The CPU fetches
+ * instructions through the byte/word accessors; the kernel reserves per-process
+ * code/data/heap/stack segments through the allocator.
+ *
+ * Permission-enforced access (faulting on writing to code, etc.) and memory
+ * read/write events are deferred to a later milestone; M2 tracks segment
+ * ownership and exposes a memory map.
  */
 export const DEFAULT_RAM_BYTES = 65536;
 
 export interface MemorySnapshot {
   readonly sizeBytes: number;
   readonly data: number[];
+}
+
+interface FreeBlock {
+  base: number;
+  size: number;
 }
 
 export interface Memory {
@@ -20,12 +38,20 @@ export interface Memory {
   readWord(address: Address): Result<number>;
   writeWord(address: Address, value: number): Result<void>;
   load(address: Address, bytes: Uint8Array): Result<void>;
+  reserve(request: ReserveRequest): Result<MemorySegment>;
+  release(id: SegmentId): Result<void>;
+  getSegment(address: Address): MemorySegment | null;
+  listSegments(): MemorySegment[];
+  memoryMap(): MemoryMapSnapshot;
   snapshot(): MemorySnapshot;
   restore(snapshot: MemorySnapshot): Result<void>;
 }
 
 export function createMemory(sizeBytes: number = DEFAULT_RAM_BYTES): Memory {
   const data = new Uint8Array(sizeBytes);
+  const segments = new Map<SegmentId, MemorySegment>();
+  let freeBlocks: FreeBlock[] = [{ base: 0, size: sizeBytes }];
+  let nextSegment = 1;
 
   const inBounds = (address: number, length: number): boolean =>
     Number.isInteger(address) && address >= 0 && address + length <= sizeBytes;
@@ -38,6 +64,20 @@ export function createMemory(sizeBytes: number = DEFAULT_RAM_BYTES): Memory {
         message: `Access at 0x${address.toString(16)} (length ${length}) is outside RAM (0x0-0x${(sizeBytes - 1).toString(16)}).`,
       }),
     );
+
+  function coalesce(): void {
+    freeBlocks.sort((a, b) => a.base - b.base);
+    const merged: FreeBlock[] = [];
+    for (const block of freeBlocks) {
+      const last = merged[merged.length - 1];
+      if (last && last.base + last.size === block.base) {
+        last.size += block.size;
+      } else {
+        merged.push({ ...block });
+      }
+    }
+    freeBlocks = merged;
+  }
 
   return {
     size: sizeBytes,
@@ -76,6 +116,106 @@ export function createMemory(sizeBytes: number = DEFAULT_RAM_BYTES): Memory {
       if (!inBounds(address, bytes.length)) return outOfBounds(address, bytes.length);
       data.set(bytes, address);
       return ok(undefined);
+    },
+
+    reserve(request) {
+      if (!Number.isInteger(request.size) || request.size <= 0) {
+        return err(
+          novaError({
+            code: 'memory/invalid-size',
+            severity: 'recoverable',
+            message: `Cannot reserve a segment of size ${request.size}.`,
+          }),
+        );
+      }
+      const index = freeBlocks.findIndex((block) => block.size >= request.size);
+      const block = index >= 0 ? freeBlocks[index] : undefined;
+      if (!block) {
+        return err(
+          novaError({
+            code: 'memory/out-of-memory',
+            severity: 'recoverable',
+            message: `No free block large enough to reserve ${request.size} bytes for ${request.kind}.`,
+          }),
+        );
+      }
+      const base = block.base;
+      const remaining = block.size - request.size;
+      if (remaining === 0) {
+        freeBlocks.splice(index, 1);
+      } else {
+        block.base = base + request.size;
+        block.size = remaining;
+      }
+      const id = segmentId(`seg-${nextSegment}`);
+      nextSegment += 1;
+      const segment: MemorySegment = {
+        id,
+        ownerPid: request.ownerPid,
+        kind: request.kind,
+        base,
+        size: request.size,
+        permissions: request.permissions ?? defaultPermissions(request.kind),
+        label: request.label ?? request.kind,
+      };
+      segments.set(id, segment);
+      return ok(segment);
+    },
+
+    release(id) {
+      const segment = segments.get(id);
+      if (!segment) {
+        return err(
+          novaError({
+            code: 'memory/unknown-segment',
+            severity: 'recoverable',
+            message: `No segment with id ${id} to release.`,
+          }),
+        );
+      }
+      segments.delete(id);
+      freeBlocks.push({ base: segment.base, size: segment.size });
+      coalesce();
+      return ok(undefined);
+    },
+
+    getSegment(address) {
+      for (const segment of segments.values()) {
+        if (address >= segment.base && address < segment.base + segment.size) return segment;
+      }
+      return null;
+    },
+
+    listSegments() {
+      return [...segments.values()].sort((a, b) => a.base - b.base);
+    },
+
+    memoryMap() {
+      const allocated = [...segments.values()];
+      const usedBytes = allocated.reduce((sum, segment) => sum + segment.size, 0);
+      const freeBytes = sizeBytes - usedBytes;
+      const freeSegments: MemorySegment[] = freeBlocks.map((block) => ({
+        id: segmentId(`free-${block.base}`),
+        ownerPid: null,
+        kind: 'free',
+        base: block.base,
+        size: block.size,
+        permissions: defaultPermissions('free'),
+        label: 'free',
+      }));
+      const segmentsView = [...allocated, ...freeSegments].sort((a, b) => a.base - b.base);
+      const largestFreeBlock = freeBlocks.reduce((max, block) => Math.max(max, block.size), 0);
+      return {
+        totalBytes: sizeBytes,
+        usedBytes,
+        freeBytes,
+        segments: segmentsView,
+        fragmentation: {
+          freeBlocks: freeBlocks.length,
+          largestFreeBlock,
+          ratio: freeBytes > 0 ? 1 - largestFreeBlock / freeBytes : 0,
+        },
+      };
     },
 
     snapshot() {

@@ -13,5 +13,11 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --clean",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@novaos/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@novaos/testing": "workspace:*"
   }
 }

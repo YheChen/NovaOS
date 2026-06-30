@@ -1,5 +1,6 @@
-import type { Address, Result, SimulationClock } from '@novaos/shared';
+import type { Address, Result, SimTime, SimulationClock } from '@novaos/shared';
 import type { EventBus } from '@novaos/events';
+import type { RegisterFileSnapshot } from './register-file';
 
 /**
  * The narrow view of memory the CPU needs. The real `@novaos/memory` `Memory`
@@ -16,10 +17,32 @@ export interface OutputSink {
   write(text: string): void;
 }
 
+/**
+ * The syscall trap contract. When a `SYSCALL` instruction executes, the CPU
+ * traps to this handler (implemented by the kernel) with the syscall id and a
+ * register snapshot, and applies the returned outcome.
+ */
+export interface SyscallTrapRequest {
+  readonly id: number;
+  readonly registers: RegisterFileSnapshot;
+  readonly tick: SimTime;
+}
+
+export type SyscallTrapResult =
+  | { readonly kind: 'return'; readonly returnValue: number }
+  | { readonly kind: 'exit'; readonly code: number }
+  | { readonly kind: 'fault'; readonly code: string; readonly message: string };
+
+export interface SyscallTrap {
+  invoke(request: SyscallTrapRequest): SyscallTrapResult;
+}
+
 /** Everything a single CPU step needs from the surrounding runtime. */
 export interface VmExecutionContext {
   readonly memory: MemoryPort;
   readonly bus: EventBus;
   readonly clock: SimulationClock;
   readonly output: OutputSink;
+  /** Installed by a kernel-backed runtime; absent on the bare M1 VM. */
+  readonly syscallTrap?: SyscallTrap;
 }

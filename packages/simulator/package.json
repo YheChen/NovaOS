@@ -15,9 +15,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@novaos/assembler": "workspace:*",
     "@novaos/cpu": "workspace:*",
     "@novaos/events": "workspace:*",
+    "@novaos/kernel": "workspace:*",
     "@novaos/memory": "workspace:*",
+    "@novaos/scheduler": "workspace:*",
     "@novaos/shared": "workspace:*"
   },
   "devDependencies": {

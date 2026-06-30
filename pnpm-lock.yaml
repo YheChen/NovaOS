@@ -50,7 +50,14 @@ importers:
 
   apps/web: {}
 
-  packages/assembler: {}
+  packages/assembler:
+    dependencies:
+      '@novaos/cpu':
+        specifier: workspace:*
+        version: link:../cpu
+      '@novaos/shared':
+        specifier: workspace:*
+        version: link:../shared
 
   packages/compiler: {}
 
@@ -77,23 +84,20 @@ importers:
 
   packages/examples: {}
 
-  packages/filesystem: {}
-
-  packages/kernel: {}
-
-  packages/memory:
+  packages/filesystem:
     dependencies:
+      '@novaos/events':
+        specifier: workspace:*
+        version: link:../events
       '@novaos/shared':
         specifier: workspace:*
         version: link:../shared
+    devDependencies:
+      '@novaos/testing':
+        specifier: workspace:*
+        version: link:../testing
 
-  packages/scheduler: {}
-
-  packages/shared: {}
-
-  packages/shell: {}
-
-  packages/simulator:
+  packages/kernel:
     dependencies:
       '@novaos/cpu':
         specifier: workspace:*
@@ -104,6 +108,9 @@ importers:
       '@novaos/memory':
         specifier: workspace:*
         version: link:../memory
+      '@novaos/scheduler':
+        specifier: workspace:*
+        version: link:../scheduler
       '@novaos/shared':
         specifier: workspace:*
         version: link:../shared
@@ -112,7 +119,104 @@ importers:
         specifier: workspace:*
         version: link:../testing
 
-  packages/terminal: {}
+  packages/memory:
+    dependencies:
+      '@novaos/shared':
+        specifier: workspace:*
+        version: link:../shared
+
+  packages/scheduler:
+    dependencies:
+      '@novaos/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      '@novaos/testing':
+        specifier: workspace:*
+        version: link:../testing
+
+  packages/shared: {}
+
+  packages/shell:
+    dependencies:
+      '@novaos/events':
+        specifier: workspace:*
+        version: link:../events
+      '@novaos/filesystem':
+        specifier: workspace:*
+        version: link:../filesystem
+      '@novaos/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      '@novaos/testing':
+        specifier: workspace:*
+        version: link:../testing
+
+  packages/simulator:
+    dependencies:
+      '@novaos/assembler':
+        specifier: workspace:*
+        version: link:../assembler
+      '@novaos/cpu':
+        specifier: workspace:*
+        version: link:../cpu
+      '@novaos/events':
+        specifier: workspace:*
+        version: link:../events
+      '@novaos/kernel':
+        specifier: workspace:*
+        version: link:../kernel
+      '@novaos/memory':
+        specifier: workspace:*
+        version: link:../memory
+      '@novaos/scheduler':
+        specifier: workspace:*
+        version: link:../scheduler
+      '@novaos/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      '@novaos/testing':
+        specifier: workspace:*
+        version: link:../testing
+
+  packages/terminal:
+    dependencies:
+      '@novaos/events':
+        specifier: workspace:*
+        version: link:../events
+      '@novaos/filesystem':
+        specifier: workspace:*
+        version: link:../filesystem
+      '@novaos/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@novaos/shell':
+        specifier: workspace:*
+        version: link:../shell
+    devDependencies:
+      '@novaos/assembler':
+        specifier: workspace:*
+        version: link:../assembler
+      '@novaos/cpu':
+        specifier: workspace:*
+        version: link:../cpu
+      '@novaos/kernel':
+        specifier: workspace:*
+        version: link:../kernel
+      '@novaos/memory':
+        specifier: workspace:*
+        version: link:../memory
+      '@novaos/scheduler':
+        specifier: workspace:*
+        version: link:../scheduler
+      '@novaos/simulator':
+        specifier: workspace:*
+        version: link:../simulator
+      '@novaos/testing':
+        specifier: workspace:*
+        version: link:../testing
 
   packages/testing:
     dependencies:

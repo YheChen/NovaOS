@@ -114,10 +114,22 @@ const print: InstructionHandler = (instruction, registers) => {
   });
 };
 
+// SYSCALL and HALT are handled directly by the CPU step (they need the execution
+// context), so these table entries are safe fallbacks that should never be reached.
+const trapsToKernel: InstructionHandler = () =>
+  err(
+    novaError({
+      code: 'cpu/syscall-requires-trap',
+      severity: 'recoverable',
+      message: 'SYSCALL must be dispatched through the syscall trap, not the handler table.',
+    }),
+  );
+
 export const HANDLERS: Record<Opcode, InstructionHandler> = {
   [Opcode.NOP]: nop,
   [Opcode.MOV]: mov,
   [Opcode.ADD]: add,
   [Opcode.PRINT]: print,
+  [Opcode.SYSCALL]: trapsToKernel,
   [Opcode.HALT]: halt,
 };

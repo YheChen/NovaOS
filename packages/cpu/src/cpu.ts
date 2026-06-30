@@ -6,7 +6,7 @@ import { createRegisterFile, type RegisterFileSnapshot, type RegisterName } from
 import { flagsEqual } from './flags';
 import { vmFault, type VmFault } from './faults';
 import type { DecodedInstruction } from './instruction';
-import type { VmExecutionContext } from './context';
+import type { SyscallTrapResult, VmExecutionContext } from './context';
 import * as events from './events';
 
 export type CpuStepStatus = 'ok' | 'halted' | 'fault';
@@ -16,6 +16,8 @@ export interface CpuStepResult {
   readonly cycles: number;
   readonly instruction: DecodedInstruction | null;
   readonly fault: VmFault | null;
+  /** Present when the step executed a `SYSCALL`. */
+  readonly syscall?: { readonly id: number; readonly outcome: SyscallTrapResult } | null;
 }
 
 export interface CpuSnapshot {
@@ -77,6 +79,11 @@ export function createCpu(): Cpu {
       return { status: 'halted', cycles: 1, instruction, fault: null };
     }
 
+    // SYSCALL traps to the kernel-provided handler.
+    if (instruction.opcode === Opcode.SYSCALL) {
+      return executeSyscall(ctx, instruction, pc);
+    }
+
     // Execute
     const effect = HANDLERS[instruction.opcode](instruction, registers.snapshot());
     if (!effect.ok) {
@@ -119,6 +126,63 @@ export function createCpu(): Cpu {
     registers.set('pc', pc + INSTRUCTION_SIZE);
 
     return { status: 'ok', cycles: effect.value.cycles, instruction, fault: null };
+  }
+
+  function executeSyscall(
+    ctx: VmExecutionContext,
+    instruction: DecodedInstruction,
+    pc: number,
+  ): CpuStepResult {
+    if (!ctx.syscallTrap) {
+      return raise(
+        ctx,
+        vmFault(
+          'invalid-operand',
+          pc,
+          `SYSCALL ${instruction.a} executed with no handler installed.`,
+        ),
+        instruction,
+      );
+    }
+
+    const outcome = ctx.syscallTrap.invoke({
+      id: instruction.a,
+      registers: registers.snapshot(),
+      tick: ctx.clock.now(),
+    });
+
+    if (outcome.kind === 'fault') {
+      return raise(ctx, vmFault('invalid-operand', pc, outcome.message), instruction);
+    }
+
+    if (outcome.kind === 'return') {
+      const previous = registers.get('r0');
+      const next = outcome.returnValue >>> 0;
+      if (previous !== next) {
+        registers.set('r0', next);
+        ctx.bus.publish(events.registerChangedEvent(ctx.clock.now(), 'r0', previous, next));
+      }
+      ctx.bus.publish(events.executedEvent(ctx.clock.now(), pc, instruction));
+      registers.set('pc', pc + INSTRUCTION_SIZE);
+      return {
+        status: 'ok',
+        cycles: 1,
+        instruction,
+        fault: null,
+        syscall: { id: instruction.a, outcome },
+      };
+    }
+
+    // outcome.kind === 'exit'
+    ctx.bus.publish(events.executedEvent(ctx.clock.now(), pc, instruction));
+    registers.set('pc', pc + INSTRUCTION_SIZE);
+    return {
+      status: 'halted',
+      cycles: 1,
+      instruction,
+      fault: null,
+      syscall: { id: instruction.a, outcome },
+    };
   }
 
   return {

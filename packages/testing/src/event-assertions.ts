@@ -20,8 +20,30 @@ export function assertEventSequence(
   }
 }
 
+/**
+ * Throw unless every type in `expected` appears in the trace in the given order
+ * (other events may appear in between). Useful for asserting key lifecycle order
+ * without pinning down every event.
+ */
+export function assertEventSubsequence(
+  events: readonly DomainEvent[],
+  expected: readonly string[],
+): void {
+  const actual = eventTypes(events);
+  let cursor = 0;
+  for (const type of actual) {
+    if (cursor < expected.length && type === expected[cursor]) cursor += 1;
+  }
+  if (cursor !== expected.length) {
+    throw new Error(
+      `Event subsequence not found (matched ${cursor}/${expected.length}).\n  expected order: ${JSON.stringify(expected)}\n  actual:         ${JSON.stringify(actual)}`,
+    );
+  }
+}
+
 export interface EventSequenceAssertion {
   toEqualSequence(expected: readonly string[]): void;
+  toContainSequence(expected: readonly string[]): void;
 }
 
 /**
@@ -37,5 +59,6 @@ export interface EventSequenceAssertion {
 export function expectEvents(events: readonly DomainEvent[]): EventSequenceAssertion {
   return {
     toEqualSequence: (expected) => assertEventSequence(events, expected),
+    toContainSequence: (expected) => assertEventSubsequence(events, expected),
   };
 }

@@ -1,7 +1,9 @@
-/**
- * @novaos/assembler — NovaASM parser, label resolution, bytecode emitter, and source maps.
- *
- * Scaffold only (Milestone 0). Implementation begins in Milestone 4.
- */
-export const PACKAGE_NAME = '@novaos/assembler';
-export const VERSION = '0.0.0';
+export * from './isa';
+export * from './lexer';
+export * from './ast';
+export * from './parser';
+export * from './source-map';
+export * from './bytecode';
+export * from './assembler';
+
+export const ASSEMBLER_VERSION = '0.0.0';

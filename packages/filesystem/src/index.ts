@@ -1,7 +1,11 @@
-/**
- * @novaos/filesystem — Virtual filesystem, path resolution, file operations, persistence.
- *
- * Scaffold only (Milestone 0). Implementation begins in Milestone 3.
- */
-export const PACKAGE_NAME = '@novaos/filesystem';
-export const VERSION = '0.0.0';
+export * from './ids';
+export * from './permissions';
+export * from './errors';
+export * from './inode';
+export * from './content-store';
+export * from './path';
+export * from './events';
+export * from './filesystem';
+export * from './persistence';
+
+export const FILESYSTEM_VERSION = '0.0.0';

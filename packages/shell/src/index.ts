@@ -1,7 +1,11 @@
-/**
- * @novaos/shell — Shell lexer, parser, AST, and command execution.
- *
- * Scaffold only (Milestone 0). Implementation begins in Milestone 3.
- */
-export const PACKAGE_NAME = '@novaos/shell';
-export const VERSION = '0.0.0';
+export * from './lexer';
+export * from './parser';
+export * from './suggestions';
+export * from './registry';
+export * from './context';
+export * from './completion';
+export * from './events';
+export { registerBuiltins } from './builtins';
+export * from './shell';
+
+export const SHELL_VERSION = '0.0.0';

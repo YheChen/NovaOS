@@ -11,6 +11,7 @@ export const Opcode = {
   MOV: 1,
   ADD: 2,
   PRINT: 3,
+  SYSCALL: 4,
   HALT: 255,
 } as const;
 
@@ -21,6 +22,7 @@ export const MNEMONICS: Record<Opcode, string> = {
   [Opcode.MOV]: 'MOV',
   [Opcode.ADD]: 'ADD',
   [Opcode.PRINT]: 'PRINT',
+  [Opcode.SYSCALL]: 'SYSCALL',
   [Opcode.HALT]: 'HALT',
 };
 
