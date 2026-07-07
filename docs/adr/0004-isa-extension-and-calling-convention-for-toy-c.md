@@ -26,7 +26,7 @@ Constraints:
 
 ## Decision
 
-**1. Extend the ISA** with the following instructions (opcodes 5–29):
+**1. Extend the ISA** with the following instructions (opcodes 5-29):
 `MOVR`, `LDI`, `SUB`, `MUL`, `DIV`, `MOD`, `NEG`, `NOT`, `CEQ`/`CNE`/`CLT`/`CLE`/
 `CGT`/`CGE` (comparisons that write 0/1), `AND`/`OR` (logical), `JMP`/`JZ`/`JNZ`,
 `PUSH`/`POP`/`CALL`/`RET`, and `LOAD`/`STORE`. Existing opcodes and their
@@ -34,13 +34,13 @@ encodings are unchanged, so the M4 golden test still passes.
 
 **2. Encoding conventions** within the 8-bit fields:
 
-- Register operands are register _indices_: 0–7 = R0–R7, **8 = SP, 9 = BP**.
+- Register operands are register _indices_: 0-7 = R0-R7, **8 = SP, 9 = BP**.
 - Control-flow targets (`JMP`/`JZ`/`JNZ`/`CALL`) encode a **PC-relative signed
   16-bit byte offset** packed into fields B (high) and C (low); the CPU computes
   `nextPc = pc + offset`. This keeps programs position-independent regardless of
-  the load base — no relocation step is needed.
+  the load base - no relocation step is needed.
 - `LDI` packs an unsigned 16-bit immediate into B/C (so integer constants up to
-  65535 load in one instruction; `MOV` still loads 0–255).
+  65535 load in one instruction; `MOV` still loads 0-255).
 - `LOAD`/`STORE` use a signed 8-bit displacement in field C: `mem[base + disp]`.
 
 **3. Extend the CPU execution model.** The instruction effect gains optional
@@ -70,13 +70,13 @@ SP/BP as operands so the compiler can do stack-pointer arithmetic.
   slot; `R0`/`R1` are pure scratch). Recursion works for free.
 - The call-frame layout is fixed and documented, so the Milestone 6 debugger can
   reconstruct the call stack by walking saved BPs.
-- Integer constants are limited to **0–65535** via `LDI` in V1, and arithmetic is
+- Integer constants are limited to **0-65535** via `LDI` in V1, and arithmetic is
   unsigned 32-bit at the print boundary (negative results display as their
   unsigned wrap). Both are documented limitations, acceptable for the
   educational scope and revisited if a future milestone needs wider literals or
   signed display.
 - Operand fields remain 8-bit, so jump range is ±32 KB and displacement range is
-  ±128 bytes — far beyond demo programs; the assembler reports an error if a
+  ±128 bytes - far beyond demo programs; the assembler reports an error if a
   program exceeds them.
 
 ## Alternatives Considered

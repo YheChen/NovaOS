@@ -19,7 +19,7 @@ importing UI libraries.
 Build `apps/web` as a **Vite + React single-page app** (TypeScript, `react-jsx`
 runtime). The UI consumes the domain packages' public snapshot contracts
 (`compileToyC` / `CompilerInspectorSnapshot`, `createProgramRunner`,
-`createDebugger` / `DebuggerSnapshot`) directly in the browser — there is no
+`createDebugger` / `DebuggerSnapshot`) directly in the browser - there is no
 server tier to add.
 
 - Editing uses a controlled `<textarea>` for Version 1 (a real editor surface
@@ -36,7 +36,7 @@ server tier to add.
 - Much simpler integration into the existing static-build monorepo: no SSR,
   no server runtime, no hydration concerns with domain singletons, trivial
   static hosting (any CDN).
-- The "no fake UI behavior" rule is naturally satisfied — every panel renders a
+- The "no fake UI behavior" rule is naturally satisfied - every panel renders a
   real snapshot produced by the domain packages; there is no server state to
   mock.
 - Diverges from the spec's named framework. If a future milestone needs SSR,

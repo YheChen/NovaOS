@@ -30,7 +30,7 @@ emits events, because every package and the UI depend on the event shape.
      id: EventId;
      type: TType;
      sequence: SequenceNumber; // monotonic, assigned by the bus on publish
-     tick: SimTime; // simulated time (branded number) — reconciles `tick`/`timestamp`
+     tick: SimTime; // simulated time (branded number) - reconciles `tick`/`timestamp`
      source: EventSource;
      correlationId?: CorrelationId;
      causationId?: CausationId;

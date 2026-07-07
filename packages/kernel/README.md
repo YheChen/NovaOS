@@ -9,7 +9,7 @@ drives the clock and stepping, and the UI observes kernel events and snapshots.
 
 ## Public API
 
-- **`createKernel(deps)` → `Kernel`** — `boot`, `createProcess`, `dispatch`,
+- **`createKernel(deps)` → `Kernel`** - `boot`, `createProcess`, `dispatch`,
   `handleSyscall`, `handleTimerInterrupt`, `recordInstruction`, `shouldPreempt`,
   `terminateCurrent`, `faultCurrent`, `hasRunnable`, and snapshot getters.
 - **Process model:** `ProcessControlBlock`, `ProcessState` + `canTransition`,
@@ -41,5 +41,5 @@ boots, runs a user process to exit, and asserts the deterministic event sequence
 ## Dependency Rules
 
 Depends on `@novaos/scheduler`, `@novaos/memory`, `@novaos/events`, `@novaos/shared`, and
-`@novaos/cpu` (for `RegisterFileSnapshot` and the syscall-trap types — see ADR-0003). No UI,
+`@novaos/cpu` (for `RegisterFileSnapshot` and the syscall-trap types - see ADR-0003). No UI,
 deterministic. Schedulers return decisions; the kernel applies all transitions.

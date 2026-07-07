@@ -23,7 +23,7 @@ wrappers.
 
 ## Events
 
-None — `@novaos/shared` defines primitives, not domain behavior.
+None - `@novaos/shared` defines primitives, not domain behavior.
 
 ## Snapshots
 

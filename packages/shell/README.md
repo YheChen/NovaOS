@@ -9,7 +9,7 @@ kernel state.
 
 ## Public API
 
-- **`createShell()` → `Shell`** — `execute(input, context)` and
+- **`createShell()` → `Shell`** - `execute(input, context)` and
   `complete(input, cursor, context)`, plus the `registry`.
 - **Lexer/parser:** `lex`, `parse`, `CommandLineNode`, `CommandNode`, `ShellArgument`.
 - **Registry:** `createCommandRegistry`, `ShellCommand`, `ParsedArgs`, `parseArgs`,
@@ -30,7 +30,7 @@ mutations emit `filesystem.*` events via the filesystem's own bus.
 
 ## Snapshots
 
-None — the shell is stateless across calls; cwd/history live in the terminal session.
+None - the shell is stateless across calls; cwd/history live in the terminal session.
 
 ## Testing
 
@@ -41,5 +41,5 @@ emission, and autocomplete.
 ## Dependency Rules
 
 Depends on `@novaos/filesystem`, `@novaos/events`, `@novaos/shared`. Does **not**
-import the kernel — system inspection goes through the injected `SystemInspector`.
+import the kernel - system inspection goes through the injected `SystemInspector`.
 UI-free and deterministic.

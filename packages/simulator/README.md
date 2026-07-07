@@ -10,9 +10,9 @@ travel, and kernel coordination layer on in later milestones.
 
 ## Public API
 
-- **`createVirtualMachine(options)` → `VirtualMachine`** — `step`, `run`, `getStatus`,
+- **`createVirtualMachine(options)` → `VirtualMachine`** - `step`, `run`, `getStatus`,
   `getOutput`, `getOutputLines`, `getRegisters`, `getEvents`, `getSnapshot`.
-- **`buildProgram(instructions, entryPoint?)`** — hand-assemble bytecode (M1 stand-in
+- **`buildProgram(instructions, entryPoint?)`** - hand-assemble bytecode (M1 stand-in
   for the assembler), `ProgramImage`, `InstructionWord`.
 - **`createBufferedOutput()`** → `BufferedOutput`.
 - Runtime event builders + `RuntimeEventType`.
@@ -24,7 +24,7 @@ travel, and kernel coordination layer on in later milestones.
 
 ## Snapshots
 
-`VmSnapshot` (`status`, `clock`, `cpu`, `memory`) — composed from the CPU and memory
+`VmSnapshot` (`status`, `clock`, `cpu`, `memory`) - composed from the CPU and memory
 snapshots.
 
 ## Testing

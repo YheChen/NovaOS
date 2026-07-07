@@ -24,21 +24,21 @@ Toy C  →  tokens  →  AST  →  semantic analysis  →  NovaIR  →  optimiza
        →  registers / memory / scheduler / syscalls  →  debugger + time-travel
 ```
 
-- **Custom VM** — a 32-bit fixed-width ISA (30 opcodes), fetch→decode→execute→
+- **Custom VM** - a 32-bit fixed-width ISA (30 opcodes), fetch→decode→execute→
   write-back pipeline, FLAGS, byte-addressable RAM, first-fit allocator, segments.
-- **Microkernel** — boot lifecycle, PCBs, FIFO/Round-Robin scheduling, timer
+- **Microkernel** - boot lifecycle, PCBs, FIFO/Round-Robin scheduling, timer
   interrupts + context switches, a syscall trap, and a process fault model.
-- **Filesystem + shell + terminal** — an inode VFS, path resolver, 21 shell
+- **Filesystem + shell + terminal** - an inode VFS, path resolver, 21 shell
   builtins, and a terminal session runtime.
-- **Toolchain** — a NovaASM assembler and a **Toy C compiler** (lexer, parser,
+- **Toolchain** - a NovaASM assembler and a **Toy C compiler** (lexer, parser,
   type checker, IR, constant-folding / copy-propagation / dead-code-elimination,
   a stack-based code generator, and full source maps).
-- **Debugger** — run/pause/continue/restart, step instruction / over / into /
+- **Debugger** - run/pause/continue/restart, step instruction / over / into /
   out, line + instruction + conditional + exception + memory breakpoints, a safe
   watch-expression evaluator (no `eval`), call-stack reconstruction, an event
   timeline, and **deterministic time-travel replay**.
-- **Workspace UI** — a Vite + React SPA: editor, compile-stage inspector, run
-  output, and a live debugger panel — all driven by the real domain packages.
+- **Workspace UI** - a Vite + React SPA: editor, compile-stage inspector, run
+  output, and a live debugger panel - all driven by the real domain packages.
 
 ## Quickstart
 
@@ -71,17 +71,17 @@ int main() {
 ## Architecture
 
 ```
-Presentation        apps/web — Vite + React workspace SPA
-Simulation Runtime  @novaos/simulator — boot, ticking, snapshots, replay
+Presentation        apps/web - Vite + React workspace SPA
+Simulation Runtime  @novaos/simulator - boot, ticking, snapshots, replay
 Domain              @novaos/{cpu, memory, kernel, scheduler, filesystem,
                     shell, terminal, assembler, compiler, debugger}
 Shared              @novaos/shared (primitives), @novaos/events (event bus)
-Content             @novaos/examples — tested example programs
+Content             @novaos/examples - tested example programs
 ```
 
 Dependency direction is strictly downward. Domain packages are **UI-free** (no
 React/DOM/Monaco) and **deterministic** (no `Math.random()` / `Date.now()`; a
-seeded PRNG and an injected clock instead). The UI owns no domain truth — it
+seeded PRNG and an injected clock instead). The UI owns no domain truth - it
 renders snapshots and events. Every package exports only through `src/index.ts`,
 the graph is acyclic, and all of this is enforced by `pnpm check:arch`.
 
@@ -109,10 +109,10 @@ Playwright · ESLint (flat) · Prettier.
 
 ## Documentation
 
-- [`docs/specs/`](docs/specs) — the 10 authoritative specifications
-- [`docs/adr/`](docs/adr) — architecture decision records
-- [`docs/orchestration/`](docs/orchestration) — task registry, quality gates, risks
-- [`docs/release-notes/`](docs/release-notes) — release notes
+- [`docs/specs/`](docs/specs) - the 10 authoritative specifications
+- [`docs/adr/`](docs/adr) - architecture decision records
+- [`docs/orchestration/`](docs/orchestration) - task registry, quality gates, risks
+- [`docs/release-notes/`](docs/release-notes) - release notes
 
 ## License
 

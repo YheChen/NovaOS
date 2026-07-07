@@ -15,7 +15,7 @@ Every change to `main` passes these. The aggregate command is `pnpm validate`.
 | 7   | Integration  | `pnpm test:integration` | Green (currently `--passWithNoTests`; populated in M9)     |
 | 8   | E2E          | `pnpm test:e2e`         | Flagship flow green (Playwright; runs in the E2E workflow) |
 
-CI runs gates 1–6 on every pull request (`.github/workflows/ci.yml`) and the
+CI runs gates 1-6 on every pull request (`.github/workflows/ci.yml`) and the
 E2E flow on push to `main` (`.github/workflows/e2e.yml`).
 
 ### Architecture check (Gate 6) enforces
@@ -46,7 +46,7 @@ Risks carried from spec §19 plus the concrete ones encountered during the build
 | Non-deterministic behavior                                   | Seeded PRNG + injected clock; arch check bans `Math.random`/`Date.now`; replay tests                                                                                                      | Controlled    |
 | Circular dependencies                                        | Scheduler operates on `SchedulableProcess` not PCB; shell uses injected `SystemInspector`/`ProgramRunner`; simulator's runner is structurally (not nominally) compatible with the shell's | Controlled    |
 | Silent contract drift                                        | Public API/event/snapshot changes recorded in milestone checkpoints + ADRs                                                                                                                | Controlled    |
-| Integer literal range (Toy C)                                | Limited to 0–65535 (16-bit `LDI`); documented in ADR-0004                                                                                                                                 | Accepted (V1) |
+| Integer literal range (Toy C)                                | Limited to 0-65535 (16-bit `LDI`); documented in ADR-0004                                                                                                                                 | Accepted (V1) |
 | Logical operators evaluate both sides (Toy C)                | The `and`/`or` operators are non-short-circuit; operands have no side effects in practice; documented in ADR-0004                                                                         | Accepted (V1) |
 | Time-travel replay cost                                      | Replay-from-start is O(n); fine for demo programs; snapshot-interval optimization is a future enhancement                                                                                 | Accepted (V1) |
 | Tooling gremlins (NUL-byte regex, BSD grep, Prettier reflow) | Diagnosed and documented in `handover.json` deviations; `pnpm format` before `format:check`                                                                                               | Resolved      |

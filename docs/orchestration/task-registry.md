@@ -1,6 +1,6 @@
 # Task Registry & Status Dashboard
 
-Status as of the v1.0.0 release (all milestones M0–M10 complete). Legend: ✅ done · 🟡 partial · ⬜ planned.
+Status as of the v1.0.0 release (all milestones M0-M10 complete). Legend: ✅ done · 🟡 partial · ⬜ planned.
 
 ## Milestone status
 
@@ -23,7 +23,7 @@ Status as of the v1.0.0 release (all milestones M0–M10 complete). Legend: ✅ 
 The roster from spec §11 maps to concrete packages/artifacts. Reviewer column
 omitted (the integration lead reviews all).
 
-### Group A — Leadership & Architecture
+### Group A - Leadership & Architecture
 
 | #   | Agent                   | Realized as                                      | Status          |
 | --- | ----------------------- | ------------------------------------------------ | --------------- |
@@ -33,7 +33,7 @@ omitted (the integration lead reviews all).
 | 04  | Monorepo Infrastructure | pnpm workspace, turbo, tsconfig, tsup            | ✅              |
 | 05  | Documentation Lead      | `docs/**`, package READMEs                       | 🟡 (M10 polish) |
 
-### Group B — Shared Runtime Foundation
+### Group B - Shared Runtime Foundation
 
 | 06 Shared Types | `packages/shared/src/{ids,result,span,...}` | ✅ |
 | 07 Event Bus | `packages/events` | ✅ |
@@ -41,7 +41,7 @@ omitted (the integration lead reviews all).
 | 09 Errors/Diagnostics | `packages/shared/src/diagnostics` | ✅ |
 | 10 Serialization/Snapshot | `packages/shared/src/serialization`, snapshots | ✅ |
 
-### Group C — CPU & VM
+### Group C - CPU & VM
 
 | 11 CPU Registers | `packages/cpu/src/register-file.ts` | ✅ |
 | 12 Decoder | `packages/cpu/src/decoder.ts` | ✅ |
@@ -49,7 +49,7 @@ omitted (the integration lead reviews all).
 | 14 VM Pipeline | `packages/cpu/src/cpu.ts` | ✅ |
 | 15 VM Exceptions | `packages/cpu/src/faults.ts` | ✅ |
 
-### Group D — Memory, Kernel, Scheduling
+### Group D - Memory, Kernel, Scheduling
 
 | 16 Memory Core | `packages/memory` | ✅ |
 | 17 Allocator | first-fit allocator in `packages/memory` | ✅ |
@@ -60,7 +60,7 @@ omitted (the integration lead reviews all).
 | 22 Syscalls | print/exit (more syscalls future) | 🟡 |
 | 23 Interrupts | timer interrupt + context switch | 🟡 |
 
-### Group E — Filesystem, Shell, Terminal
+### Group E - Filesystem, Shell, Terminal
 
 | 24 Filesystem Core | `packages/filesystem` (inode tree, path resolver) | ✅ |
 | 25 File Operations | create/read/write/copy/move/delete | ✅ |
@@ -69,7 +69,7 @@ omitted (the integration lead reviews all).
 | 28 Shell Builtins | 21 builtins incl. compile/run | ✅ |
 | 29 Terminal Runtime | `packages/terminal` | ✅ |
 
-### Group F — Compiler, Assembler, Debugger
+### Group F - Compiler, Assembler, Debugger
 
 | 30 Toy C Lexer/Parser | `packages/compiler/src/{lexer,parser,ast}.ts` | ✅ |
 | 31 Semantic Analysis | `packages/compiler/src/semantics.ts` | ✅ |
@@ -82,7 +82,7 @@ omitted (the integration lead reviews all).
 | 38 Breakpoints/Watches | 5 breakpoint kinds + safe watch evaluator | ✅ |
 | 39 Timeline/Replay | timeline summary + deterministic time-travel | ✅ |
 
-### Group G — UI & UX
+### Group G - UI & UX
 
 | 40 Design System | `apps/web/src/styles.css` (tokens) | 🟡 (`packages/ui` future) |
 | 41 Workspace Layout | `apps/web/src/App.tsx` | ✅ |
@@ -93,7 +93,7 @@ omitted (the integration lead reviews all).
 | 46 Debugger UI | `apps/web/src/components/DebuggerPanel.tsx` | ✅ |
 | 47 Tutorials/Examples | (M10) | ⬜ |
 
-### Group H — Quality, Performance, Release
+### Group H - Quality, Performance, Release
 
 | 48 Testing & QA | Vitest + Playwright + integration/golden/replay suites, `scripts/check-architecture.ts` | ✅ |
 | 49 Performance/A11y | (property/fuzz, a11y audit, perf budgets) | ⬜ (post-v1.0) |

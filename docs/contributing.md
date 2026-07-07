@@ -6,7 +6,7 @@
 2. **One owner per file.** Coordinate before editing a file another stream owns.
 3. **Contracts before implementation.** Public interfaces are defined before parallel work.
 4. **The simulator core owns truth; the UI only observes** snapshots and typed events.
-5. **Determinism is a feature.** No `Date.now()` / `Math.random()` in domain logic — use the
+5. **Determinism is a feature.** No `Date.now()` / `Math.random()` in domain logic - use the
    injected `SimulationClock` and seeded `DeterministicRandom` from `@novaos/shared`.
 6. **No untested core logic, no untyped public APIs, no silent contract changes.**
 
