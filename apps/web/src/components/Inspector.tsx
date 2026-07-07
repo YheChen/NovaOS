@@ -45,7 +45,7 @@ export function Inspector({ compilation }: { compilation: CompilationResult | nu
         {stage === 'Tokens' && (
           <pre>{snap.tokens.map((t) => `${t.kind.padEnd(11)} ${t.lexeme}`).join('\n')}</pre>
         )}
-        {stage === 'IR' && <pre>{snap.ir ? formatIR(snap.ir) : '(no IR — fix errors first)'}</pre>}
+        {stage === 'IR' && <pre>{snap.ir ? formatIR(snap.ir) : '(no IR; fix errors first)'}</pre>}
         {stage === 'Optimized IR' && (
           <pre>{snap.optimizedIr ? formatIR(snap.optimizedIr) : '(none)'}</pre>
         )}

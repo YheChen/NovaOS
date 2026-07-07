@@ -52,7 +52,7 @@ export function App() {
     setRunStatus(
       report.ok
         ? `exit ${report.exitCode ?? 0}`
-        : `compile error — ${report.diagnostics.length} diagnostic(s)`,
+        : `compile error: ${report.diagnostics.length} diagnostic(s)`,
     );
     void result;
   };
@@ -113,7 +113,7 @@ export function App() {
       <div className="layout">
         <div className="column">
           <div className="panel" style={{ flex: 1, minHeight: 0 }}>
-            <div className="panel-title">Editor — {FILE}</div>
+            <div className="panel-title">Editor: {FILE}</div>
             <textarea
               className="editor"
               value={source}
@@ -125,7 +125,7 @@ export function App() {
           <div className="panel">
             <div className="panel-title">Output {runStatus && `· ${runStatus}`}</div>
             <div className="terminal" data-testid="output">
-              {output || '(no output yet — press Run)'}
+              {output || '(no output yet. Press Run.)'}
             </div>
           </div>
         </div>
