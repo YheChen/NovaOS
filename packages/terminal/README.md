@@ -4,12 +4,12 @@
 
 The headless terminal runtime: an interactive session model that owns the input
 buffer, cursor, command history, output chunks, and autocomplete coordination,
-and drives the shell. It is UI-free — a React terminal view (Milestone 7) renders
+and drives the shell. It is UI-free - a React terminal view (Milestone 7) renders
 its state and forwards key events.
 
 ## Public API
 
-- **`createTerminalSession(deps)` → `TerminalSession`** — `submit`, `setInput`/`insert`/
+- **`createTerminalSession(deps)` → `TerminalSession`** - `submit`, `setInput`/`insert`/
   `backspace`/`moveCursor`, `getOutput`, `getHistory`, `historyPrev`/`historyNext`,
   `complete`, `interrupt`, `clear`, `prompt`, `getCwd`.
 - **`TerminalOutputChunk`**, `TerminalChunkKind`.

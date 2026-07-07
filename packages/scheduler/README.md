@@ -3,15 +3,15 @@
 ## Purpose
 
 Pluggable CPU scheduling behind one interface. The scheduler manages a ready
-queue and chooses ordering only — it never mutates process state. The kernel
+queue and chooses ordering only - it never mutates process state. The kernel
 admits ready processes and applies the transitions the scheduler's decisions imply.
 
 ## Public API
 
 - **`Scheduler`** interface: `enqueue`, `remove`, `pickNext`, `requeue`, `has`, `size`,
   `snapshot`, `restore`, plus `id` / `name` / `quantumTicks`.
-- **`createFifoScheduler()`** — First-Come-First-Served (non-preemptive, `quantumTicks = null`).
-- **`createRoundRobinScheduler({ quantumTicks })`** — Round Robin (preemptive; rotates on
+- **`createFifoScheduler()`** - First-Come-First-Served (non-preemptive, `quantumTicks = null`).
+- **`createRoundRobinScheduler({ quantumTicks })`** - Round Robin (preemptive; rotates on
   quantum expiry).
 - **Types:** `SchedulableProcess`, `SchedulingContext`, `SchedulerSnapshot`, `SchedulerId`,
   `RoundRobinConfig`.
@@ -20,7 +20,7 @@ Priority, Shortest-Job-First, and Lottery schedulers are deferred to a later mil
 
 ## Events
 
-None — the scheduler is pure. The kernel emits `scheduler.*` events as it coordinates
+None - the scheduler is pure. The kernel emits `scheduler.*` events as it coordinates
 scheduling decisions.
 
 ## Snapshots

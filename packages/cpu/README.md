@@ -8,7 +8,7 @@ the single-instruction fetch → decode → execute → write-back pipeline (`Cp
 
 ## Public API
 
-- **`createCpu()` → `Cpu`** — `reset`, `getRegisters`, `setRegister`, `getSnapshot`,
+- **`createCpu()` → `Cpu`** - `reset`, `getRegisters`, `setRegister`, `getSnapshot`,
   `restoreSnapshot`, and `step(ctx)`.
 - **`createRegisterFile()`**, `RegisterFileSnapshot`, `FlagsRegister`, `RegisterName`,
   `GPR_NAMES`, `gprNameFromIndex`.
@@ -27,7 +27,7 @@ flag events fire only on an actual change.
 
 ## Snapshots
 
-`CpuSnapshot` (the register-file snapshot) — plain, serializable, restorable.
+`CpuSnapshot` (the register-file snapshot) - plain, serializable, restorable.
 
 ## Testing
 

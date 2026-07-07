@@ -7,15 +7,15 @@ same way. Consumed as a `devDependency` by other packages' test suites.
 
 ## Public API
 
-- **`createTestEventBus()`** → `{ bus, recorder }` — an `EventBus` with an attached
+- **`createTestEventBus()`** → `{ bus, recorder }` - an `EventBus` with an attached
   `EventRecorder`.
-- **`expectEvents(events).toEqualSequence([...])`** — assert an exact event-type sequence.
-- **`assertEventSequence`**, **`eventTypes`** — lower-level helpers.
-- **`seeded(seed)`** — a deterministic RNG (re-export of `createSeededRandom`).
+- **`expectEvents(events).toEqualSequence([...])`** - assert an exact event-type sequence.
+- **`assertEventSequence`**, **`eventTypes`** - lower-level helpers.
+- **`seeded(seed)`** - a deterministic RNG (re-export of `createSeededRandom`).
 
 ## Events
 
-None — provides tooling for asserting on events emitted elsewhere.
+None - provides tooling for asserting on events emitted elsewhere.
 
 ## Snapshots
 

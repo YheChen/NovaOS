@@ -1,21 +1,21 @@
 # NovaOS Orchestration
 
-This directory is the **living project-management surface** for NovaOS — the
+This directory is the **living project-management surface** for NovaOS - the
 concrete realization of the 50-agent orchestration plan in
 [`docs/specs/08-agent-orchestration-v2.md`](../specs/08-agent-orchestration-v2.md).
 
 NovaOS was built milestone-by-milestone by a single Claude Code instance acting
 as program manager, staff engineer, architect, integration lead, and release
 manager. The spec describes an organization of up to 50 specialized agents; this
-repo applies the same **discipline** — contracts first, clear ownership, one
-owner per file, continuous integration, no merge without green gates — whether
+repo applies the same **discipline** - contracts first, clear ownership, one
+owner per file, continuous integration, no merge without green gates - whether
 the work is executed by 50 agents or one.
 
 ## Documents
 
-- [`task-registry.md`](./task-registry.md) — the 50-agent roster mapped to real
+- [`task-registry.md`](./task-registry.md) - the 50-agent roster mapped to real
   packages and current status, plus the milestone status dashboard.
-- [`quality-gates.md`](./quality-gates.md) — the merge gates, the exact commands,
+- [`quality-gates.md`](./quality-gates.md) - the merge gates, the exact commands,
   and the risk register (including real risks encountered during the build).
 
 ## Operating model (as applied)
@@ -52,7 +52,7 @@ Every milestone followed this loop:
 
 ## Activation waves (spec §12) vs. delivered milestones
 
-The spec's eight activation waves map onto the delivered milestones M0–M10:
+The spec's eight activation waves map onto the delivered milestones M0-M10:
 
 | Wave                       | Spec focus                                         | Delivered in |
 | -------------------------- | -------------------------------------------------- | ------------ |
@@ -60,7 +60,7 @@ The spec's eight activation waves map onto the delivered milestones M0–M10:
 | 2 VM & Memory              | registers, decoder, handlers, pipeline, memory     | M1           |
 | 3 Kernel & Scheduling      | boot, processes, scheduler, syscalls, interrupts   | M2           |
 | 4 Filesystem & Shell       | VFS, shell, terminal                               | M3           |
-| 5 Toolchain                | assembler (M4), Toy C compiler (M5)                | M4–M5        |
+| 5 Toolchain                | assembler (M4), Toy C compiler (M5)                | M4-M5        |
 | 6 Debugger & Replay        | debugger, breakpoints, watches, timeline, replay   | M6           |
 | 7 UI Integration           | workspace, editor, inspector, debugger panels      | M7           |
-| 8 Education, Perf, Release | orchestration docs, testing/devops, launch         | M8–M10       |
+| 8 Education, Perf, Release | orchestration docs, testing/devops, launch         | M8-M10       |
