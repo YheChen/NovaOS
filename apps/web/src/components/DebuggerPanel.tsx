@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { RegisterFileSnapshot } from '@novaos/cpu';
 import type { DebuggerSnapshot } from '@novaos/debugger';
+import { StackView } from './StackView';
 
 export interface DebugActions {
   stepInstruction: () => void;
@@ -20,12 +21,14 @@ export function DebuggerPanel({
   snapshot,
   previousRegisters,
   totalSteps = 0,
+  readWord,
   source,
   actions,
 }: {
   snapshot: DebuggerSnapshot | null;
   previousRegisters?: RegisterFileSnapshot | null;
   totalSteps?: number;
+  readWord?: (address: number) => number | null;
   source: string;
   actions: DebugActions;
 }) {
@@ -106,6 +109,8 @@ export function DebuggerPanel({
             </tbody>
           </table>
         )}
+
+        {readWord && <StackView snapshot={snapshot} readWord={readWord} />}
 
         <h4 className="muted">Watches</h4>
         <form
