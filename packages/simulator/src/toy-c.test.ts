@@ -125,6 +125,47 @@ int main() {
     ).toBe('24');
   });
 
+  it('short-circuits && (RHS side effect is skipped)', () => {
+    // If `&&` short-circuits, sideEffect() never runs, so 99 is never printed.
+    expect(
+      run(
+        'sc-and.c',
+        `int sideEffect() { print(99); return 1; }
+int main() {
+  if (false && sideEffect() == 1) { print(1); } else { print(0); }
+  return 0;
+}`,
+      ),
+    ).toBe('0');
+  });
+
+  it('short-circuits || (RHS side effect is skipped)', () => {
+    expect(
+      run(
+        'sc-or.c',
+        `int sideEffect() { print(99); return 1; }
+int main() {
+  if (true || sideEffect() == 1) { print(1); } else { print(0); }
+  return 0;
+}`,
+      ),
+    ).toBe('1');
+  });
+
+  it('evaluates both sides of && when needed', () => {
+    expect(
+      run(
+        'and.c',
+        `int main() {
+  int a = 1;
+  int b = 1;
+  if (a == 1 && b == 1) { print(7); } else { print(0); }
+  return 0;
+}`,
+      ),
+    ).toBe('7');
+  });
+
   it('returns a compile error (not a crash) for invalid Toy C', () => {
     const report = runner.run('bad.c', 'int main() { return y; }');
     expect(report.ok).toBe(false);
