@@ -93,6 +93,38 @@ int main() {
     expect(run('arith.c', 'int main() { print(2 + 3 * 4); return 0; }')).toBe('14');
   });
 
+  it('runs a for loop with compound assignment: sum 1..5 => 15', () => {
+    expect(
+      run(
+        'for.c',
+        `int main() {
+  int s = 0;
+  for (int i = 1; i <= 5; i += 1) {
+    s += i;
+  }
+  print(s);
+  return 0;
+}`,
+      ),
+    ).toBe('15');
+  });
+
+  it('supports compound assignment operators', () => {
+    expect(
+      run(
+        'compound.c',
+        `int main() {
+  int x = 10;
+  x += 5;
+  x -= 3;
+  x *= 2;
+  print(x);
+  return 0;
+}`,
+      ),
+    ).toBe('24');
+  });
+
   it('returns a compile error (not a crash) for invalid Toy C', () => {
     const report = runner.run('bad.c', 'int main() { return y; }');
     expect(report.ok).toBe(false);
