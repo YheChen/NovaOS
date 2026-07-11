@@ -10,6 +10,7 @@ import type {
   DebugProgram,
   DebuggerSnapshot,
   DebuggerState,
+  HeapView,
   PauseReason,
   ProcessView,
   ReplayConfig,
@@ -67,6 +68,8 @@ export interface DebugController {
   readWord(address: number): number | null;
   /** The kernel process table + scheduler state, for the process visualizer. */
   getProcessView(): ProcessView;
+  /** The current process's heap blocks, for the heap visualizer. */
+  getHeapView(): HeapView;
 }
 
 const DEFAULT_MAX_STEPS = 200_000;
@@ -521,6 +524,14 @@ export function createDebugger(program: DebugProgram, config: ReplayConfig = {})
         readyQueue: sched.readyQueue.map(num),
         algorithm: sched.algorithmName,
         quantumTicks: sched.quantumTicks,
+      };
+    },
+    getHeapView() {
+      return {
+        blocks: runtime
+          .getKernel()
+          .getHeapBlocks(pid)
+          .map((b) => ({ start: b.start, size: b.size, free: b.free })),
       };
     },
   };

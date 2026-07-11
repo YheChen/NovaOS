@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import type { RegisterFileSnapshot } from '@novaos/cpu';
-import type { DebuggerSnapshot, ProcessView } from '@novaos/debugger';
+import type { DebuggerSnapshot, ProcessView, HeapView as HeapViewData } from '@novaos/debugger';
 import { StackView } from './StackView';
 import { ProcessTable } from './ProcessTable';
+import { HeapView } from './HeapView';
 
 export interface DebugActions {
   stepInstruction: () => void;
@@ -24,6 +25,7 @@ export function DebuggerPanel({
   totalSteps = 0,
   readWord,
   processView,
+  heapView,
   source,
   actions,
 }: {
@@ -32,6 +34,7 @@ export function DebuggerPanel({
   totalSteps?: number;
   readWord?: (address: number) => number | null;
   processView?: ProcessView | null;
+  heapView?: HeapViewData | null;
   source: string;
   actions: DebugActions;
 }) {
@@ -116,6 +119,8 @@ export function DebuggerPanel({
         {readWord && <StackView snapshot={snapshot} readWord={readWord} />}
 
         {processView && <ProcessTable view={processView} />}
+
+        {heapView && <HeapView view={heapView} />}
 
         <h4 className="muted">Watches</h4>
         <form

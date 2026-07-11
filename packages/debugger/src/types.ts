@@ -85,6 +85,17 @@ export interface ProcessRow {
   readonly instructionsExecuted: number;
 }
 
+export interface HeapBlockView {
+  readonly start: number;
+  readonly size: number;
+  readonly free: boolean;
+}
+
+/** A UI-friendly view of the current process's heap blocks. */
+export interface HeapView {
+  readonly blocks: HeapBlockView[];
+}
+
 /** A UI-friendly view of the kernel's process table and scheduler state. */
 export interface ProcessView {
   readonly processes: ProcessRow[];
