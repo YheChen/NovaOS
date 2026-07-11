@@ -1,7 +1,7 @@
 import { diagnostic, type Diagnostic, type SourceSpan } from '@novaos/shared';
 import type { ExpressionNode, FunctionDeclarationNode, ProgramNode, StatementNode } from './ast';
 import type { FunctionSymbol } from './semantics';
-import { typeFromName, type ToyType, VOID } from './types';
+import { typeFromName, type ToyType, VOID, BOOL } from './types';
 import type {
   IRBasicBlock,
   IRFunction,
@@ -133,6 +133,9 @@ function lowerFunction(
         return t;
       }
       case 'BinaryExpression': {
+        if (expr.operator === '&&' || expr.operator === '||') {
+          return genShortCircuit(expr.operator, expr.left, expr.right, expr.span);
+        }
         const left = genExpr(expr.left);
         const right = genExpr(expr.right);
         const t = freshTemp();
@@ -163,6 +166,44 @@ function lowerFunction(
         return t;
       }
     }
+  };
+
+  // Short-circuit `&&` / `||`: evaluate the RHS only when needed, storing the
+  // boolean result in a synthetic local. `a && b` => a ? b : 0; `a || b` => a ? 1 : b.
+  const genShortCircuit = (
+    op: '&&' | '||',
+    leftNode: ExpressionNode,
+    rightNode: ExpressionNode,
+    span: SourceSpan,
+  ): IRValueId => {
+    const result = declareLocal(`$sc${nextTemp}`, BOOL, false);
+    const a = genExpr(leftNode);
+    const rhsBlk = newBlock('sc_rhs');
+    const shortBlk = newBlock('sc_short');
+    const doneBlk = newBlock('sc_done');
+    terminate({
+      kind: 'branch',
+      condition: a,
+      thenBlock: op === '&&' ? rhsBlk.id : shortBlk.id,
+      elseBlock: op === '&&' ? shortBlk.id : rhsBlk.id,
+      span,
+    });
+
+    startBlock(shortBlk);
+    const c = freshTemp();
+    emit({ kind: 'const', target: c, value: op === '&&' ? 0 : 1, span });
+    emit({ kind: 'store', local: result, value: c, span });
+    terminate({ kind: 'jump', target: doneBlk.id, span });
+
+    startBlock(rhsBlk);
+    const b = genExpr(rightNode);
+    emit({ kind: 'store', local: result, value: b, span });
+    terminate({ kind: 'jump', target: doneBlk.id, span });
+
+    startBlock(doneBlk);
+    const t = freshTemp();
+    emit({ kind: 'load', target: t, local: result, span });
+    return t;
   };
 
   // --- Statements ----------------------------------------------------------
