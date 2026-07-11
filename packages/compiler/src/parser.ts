@@ -102,19 +102,54 @@ export function parse(source: string, fileId?: FileId): ParseResult {
   // --- Expressions (precedence climbing) -----------------------------------
   const parseExpression = (): ExpressionNode => parseAssignment();
 
+  const COMPOUND: Record<string, BinaryOperator> = {
+    '+=': '+',
+    '-=': '-',
+    '*=': '*',
+    '/=': '/',
+    '%=': '%',
+  };
+
   const parseAssignment = (): ExpressionNode => {
     const left = parseLogicOr();
-    if (check('operator', '=')) {
+    const t = peek();
+    const isCompound = t.kind === 'operator' && t.lexeme in COMPOUND;
+    if (check('operator', '=') || isCompound) {
       const op = advance();
       const value = parseAssignment();
       if (left.kind !== 'Identifier') {
         throw error(op, 'Invalid assignment target.', 'The left side of `=` must be a variable.');
       }
+      if (op.lexeme === '=') {
+        return {
+          kind: 'AssignmentExpression',
+          id: id(),
+          target: left,
+          value,
+          span: spanBetween(left.span, value.span),
+        };
+      }
+      // Desugar `x += e` into `x = x + e`.
+      const baseOp = COMPOUND[op.lexeme] as BinaryOperator;
+      const readTarget: ExpressionNode = {
+        kind: 'Identifier',
+        id: id(),
+        name: left.name,
+        span: left.span,
+      };
+      const combined: ExpressionNode = {
+        kind: 'BinaryExpression',
+        id: id(),
+        operator: baseOp,
+        left: readTarget,
+        right: value,
+        span: spanBetween(left.span, value.span),
+      };
       return {
         kind: 'AssignmentExpression',
         id: id(),
         target: left,
-        value,
+        value: combined,
         span: spanBetween(left.span, value.span),
       };
     }
@@ -245,6 +280,7 @@ export function parse(source: string, fileId?: FileId): ParseResult {
     if (check('punctuation', '{')) return parseBlock();
     if (check('keyword', 'if')) return parseIf();
     if (check('keyword', 'while')) return parseWhile();
+    if (check('keyword', 'for')) return parseFor();
     if (check('keyword', 'return')) return parseReturn();
     if (peek().kind === 'keyword' && TYPE_NAMES.has(peek().lexeme)) return parseVarDecl();
     const expr = parseExpression();
@@ -287,6 +323,64 @@ export function parse(source: string, fileId?: FileId): ParseResult {
       condition,
       body,
       span: spanBetween(kw.span, body.span),
+    };
+  };
+
+  // Desugar `for (init; cond; update) body` into `{ init; while (cond) { body; update; } }`.
+  const parseFor = (): StatementNode => {
+    const kw = advance(); // for
+    expect('punctuation', '(', '`(` after `for`');
+    let init: StatementNode | null = null;
+    if (match('punctuation', ';')) {
+      // no initializer
+    } else if (peek().kind === 'keyword' && TYPE_NAMES.has(peek().lexeme)) {
+      init = parseVarDecl();
+    } else {
+      const expr = parseExpression();
+      const semi = expect('punctuation', ';', '`;` after the loop initializer');
+      init = {
+        kind: 'ExpressionStatement',
+        id: id(),
+        expression: expr,
+        span: spanBetween(expr.span, semi.span),
+      };
+    }
+    let condition: ExpressionNode | null = null;
+    if (!check('punctuation', ';')) condition = parseExpression();
+    expect('punctuation', ';', '`;` after the loop condition');
+    let update: ExpressionNode | null = null;
+    if (!check('punctuation', ')')) update = parseExpression();
+    const close = expect('punctuation', ')', '`)` after the for-clauses');
+    const body = parseStatement();
+
+    const cond: ExpressionNode = condition ?? {
+      kind: 'BooleanLiteral',
+      id: id(),
+      value: true,
+      span: kw.span,
+    };
+    const whileBodyStatements: StatementNode[] = [body];
+    if (update) {
+      whileBodyStatements.push({
+        kind: 'ExpressionStatement',
+        id: id(),
+        expression: update,
+        span: update.span,
+      });
+    }
+    const whileStmt: StatementNode = {
+      kind: 'WhileStatement',
+      id: id(),
+      condition: cond,
+      body: { kind: 'BlockStatement', id: id(), statements: whileBodyStatements, span: body.span },
+      span: spanBetween(kw.span, body.span),
+    };
+    const outer: StatementNode[] = init ? [init, whileStmt] : [whileStmt];
+    return {
+      kind: 'BlockStatement',
+      id: id(),
+      statements: outer,
+      span: spanBetween(kw.span, close.span),
     };
   };
 
