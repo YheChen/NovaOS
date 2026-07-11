@@ -10,6 +10,7 @@ export interface DebugActions {
   continueExecution: () => void;
   stepBack: () => void;
   restart: () => void;
+  jumpToStep: (step: number) => void;
   addWatch: (expression: string) => void;
 }
 
@@ -18,11 +19,13 @@ const REG_KEYS = ['r0', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'pc', 'sp', 'b
 export function DebuggerPanel({
   snapshot,
   previousRegisters,
+  totalSteps = 0,
   source,
   actions,
 }: {
   snapshot: DebuggerSnapshot | null;
   previousRegisters?: RegisterFileSnapshot | null;
+  totalSteps?: number;
   source: string;
   actions: DebugActions;
 }) {
@@ -144,8 +147,20 @@ export function DebuggerPanel({
 
         <h4 className="muted">Timeline</h4>
         <p>
-          cursor <strong>{snapshot.timeline.cursor}</strong> · {snapshot.timeline.eventCount} events
+          step <strong>{snapshot.timeline.cursor}</strong>
+          {totalSteps > 0 ? ` / ${totalSteps}` : ''} · {snapshot.timeline.eventCount} events
         </p>
+        {totalSteps > 0 && (
+          <input
+            type="range"
+            className="scrubber"
+            min={0}
+            max={totalSteps}
+            value={Math.min(snapshot.timeline.cursor, totalSteps)}
+            onChange={(e) => actions.jumpToStep(Number(e.target.value))}
+            aria-label="Scrub execution timeline"
+          />
+        )}
         {snapshot.output.trim() && (
           <>
             <h4 className="muted">Output</h4>

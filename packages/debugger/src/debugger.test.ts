@@ -184,6 +184,13 @@ describe('time-travel replay', () => {
     expect(replay.output.trim()).toBe('7');
   });
 
+  it('reports a total step count that matches the terminated cursor', () => {
+    const dbg = createDebugger(programFrom(LINEAR));
+    const total = dbg.getTotalSteps();
+    expect(total).toBeGreaterThan(0);
+    expect(dbg.continueExecution().timeline.cursor).toBe(total);
+  });
+
   it('is deterministic across two independent sessions', () => {
     const a = createDebugger(programFrom(LINEAR)).continueExecution();
     const b = createDebugger(programFrom(LINEAR)).continueExecution();

@@ -56,6 +56,8 @@ export interface DebugController {
   // time travel
   stepBack(): DebuggerSnapshot;
   jumpToStep(step: number): DebuggerSnapshot;
+  /** Total instructions the program executes to termination (for a scrubber). */
+  getTotalSteps(): number;
 
   // address/line helpers (for UI + tests)
   lineForAddress(address: number): number | null;
@@ -113,6 +115,7 @@ export function createDebugger(program: DebugProgram, config: ReplayConfig = {})
   let currentStep = 0;
   let depth = 0;
   let currentPc = 0; // relative address
+  let totalSteps: number | null = null; // memoized run-to-completion step count
 
   const log = (type: string): void => {
     eventLog.push({ type, step: currentStep });
@@ -481,6 +484,18 @@ export function createDebugger(program: DebugProgram, config: ReplayConfig = {})
       seekToStep(step);
       log('timeline.jump');
       return snapshot();
+    },
+    getTotalSteps() {
+      if (totalSteps === null) {
+        const rt = createNovaRuntime({ scheduler: 'fifo', seed: 1, maxSteps });
+        rt.boot();
+        rt.spawn('count', {
+          entryPoint: program.bytecode.entryPoint,
+          code: program.bytecode.code,
+        });
+        totalSteps = rt.run().steps;
+      }
+      return totalSteps;
     },
 
     lineForAddress,
