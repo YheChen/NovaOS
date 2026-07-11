@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { RegisterFileSnapshot } from '@novaos/cpu';
 import type { DebuggerSnapshot } from '@novaos/debugger';
 
 export interface DebugActions {
@@ -16,10 +17,12 @@ const REG_KEYS = ['r0', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'pc', 'sp', 'b
 
 export function DebuggerPanel({
   snapshot,
+  previousRegisters,
   source,
   actions,
 }: {
   snapshot: DebuggerSnapshot | null;
+  previousRegisters?: RegisterFileSnapshot | null;
   source: string;
   actions: DebugActions;
 }) {
@@ -69,13 +72,18 @@ export function DebuggerPanel({
         <h4 className="muted">Registers</h4>
         <table>
           <tbody>
-            {REG_KEYS.map((k) => (
-              <tr key={k}>
-                <th>{k.toUpperCase()}</th>
-                <td>{snapshot.registers[k]}</td>
-                <td className="muted">0x{snapshot.registers[k].toString(16)}</td>
-              </tr>
-            ))}
+            {REG_KEYS.map((k) => {
+              const changed = previousRegisters
+                ? previousRegisters[k] !== snapshot.registers[k]
+                : false;
+              return (
+                <tr key={k} className={changed ? 'reg-changed' : undefined}>
+                  <th>{k.toUpperCase()}</th>
+                  <td>{snapshot.registers[k]}</td>
+                  <td className="muted">0x{snapshot.registers[k].toString(16)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 
