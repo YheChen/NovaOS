@@ -29,6 +29,7 @@ import {
 } from './pcb';
 import { createPidAllocator } from './pid';
 import { SYSCALL_HANDLERS, syscallName } from './syscalls';
+import { createHeap, type Heap } from './heap';
 import type { RegisterPort } from './register-port';
 import {
   type KernelStatus,
@@ -130,6 +131,18 @@ export function createKernel(deps: KernelDeps): Kernel {
   let currentPid: ProcessId | null = null;
   let status: KernelStatus = 'created';
   let lastFault: KernelFault | null = null;
+
+  // Per-process heap allocator, created lazily from the process heap segment.
+  const heaps = new Map<ProcessId, Heap>();
+  const heapFor = (pid: ProcessId): Heap | undefined => {
+    const existing = heaps.get(pid);
+    if (existing) return existing;
+    const seg = table.get(pid)?.memoryMap.heap;
+    if (!seg) return undefined;
+    const heap = createHeap(seg.base, seg.size);
+    heaps.set(pid, heap);
+    return heap;
+  };
 
   const now = () => clock.now();
   const schedContext = (): SchedulingContext => ({ currentPid, tick: now(), random });
@@ -399,6 +412,8 @@ export function createKernel(deps: KernelDeps): Kernel {
         tick: request.tick,
         writeOutput,
         emitOutput: (value, text) => emitOutput(pid, value, text),
+        heapAlloc: (size) => heapFor(pid)?.malloc(size) ?? 0,
+        heapFree: (address) => heapFor(pid)?.free(address) ?? false,
       });
 
       if (outcome.kind === 'return') {

@@ -145,6 +145,25 @@ function lowerInstruction(
       emit(`  STORE R0, BP, ${tempOff(ins.target)}`, s);
       break;
     case 'call': {
+      // Dynamic-memory builtins compile to syscalls / direct memory access.
+      if (ins.callee === 'malloc' || ins.callee === 'free') {
+        emit(`  LOAD R0, BP, ${tempOff(ins.args[0] as number)}`, s);
+        emit(ins.callee === 'malloc' ? '  SYSCALL 1' : '  SYSCALL 2', s);
+        if (ins.target !== null) emit(`  STORE R0, BP, ${tempOff(ins.target)}`, s);
+        break;
+      }
+      if (ins.callee === 'peek') {
+        emit(`  LOAD R1, BP, ${tempOff(ins.args[0] as number)}`, s); // R1 = address
+        emit('  LOAD R0, R1, 0', s); // R0 = mem[address]
+        if (ins.target !== null) emit(`  STORE R0, BP, ${tempOff(ins.target)}`, s);
+        break;
+      }
+      if (ins.callee === 'poke') {
+        emit(`  LOAD R1, BP, ${tempOff(ins.args[0] as number)}`, s); // R1 = address
+        emit(`  LOAD R0, BP, ${tempOff(ins.args[1] as number)}`, s); // R0 = value
+        emit('  STORE R0, R1, 0', s); // mem[address] = value
+        break;
+      }
       // Push arguments right-to-left; argument i is read by the callee at [BP+8+4i].
       for (let i = ins.args.length - 1; i >= 0; i -= 1) {
         emit(`  LOAD R0, BP, ${tempOff(ins.args[i] as number)}`, s);

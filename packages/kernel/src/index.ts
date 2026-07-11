@@ -5,6 +5,7 @@ export * from './faults';
 export * from './interrupts';
 export * from './register-port';
 export * from './syscalls';
+export * from './heap';
 export * from './events';
 export * from './snapshots';
 export * from './kernel';

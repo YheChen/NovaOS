@@ -178,6 +178,22 @@ int main() {
     expect(run('shr.c', 'int main() { print(64 >> 2); return 0; }')).toBe('16');
   });
 
+  it('supports dynamic memory: malloc / poke / peek / free', () => {
+    expect(
+      run(
+        'heap.c',
+        `int main() {
+  int p = malloc(8);
+  poke(p, 42);
+  poke(p + 4, 8);
+  print(peek(p) + peek(p + 4));
+  free(p);
+  return 0;
+}`,
+      ),
+    ).toBe('50');
+  });
+
   it('respects bitwise vs arithmetic precedence (1 | 2 & 2 => 3)', () => {
     // & binds tighter than |, so this is 1 | (2 & 2) = 1 | 2 = 3.
     expect(run('prec.c', 'int main() { print(1 | 2 & 2); return 0; }')).toBe('3');
