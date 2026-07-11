@@ -22,6 +22,20 @@ const DEFAULT_SOURCE = `int main() {
 `;
 
 const FILE = 'main.c';
+const SHARE_PREFIX = 'src=';
+
+function encodeSource(src: string): string {
+  return btoa(encodeURIComponent(src));
+}
+function decodeSourceFromHash(): string | null {
+  const hash = window.location.hash.replace(/^#/, '');
+  if (!hash.startsWith(SHARE_PREFIX)) return null;
+  try {
+    return decodeURIComponent(atob(hash.slice(SHARE_PREFIX.length)));
+  } catch {
+    return null;
+  }
+}
 
 function buildDebugProgram(compilation: CompilationResult): DebugProgram | null {
   if (!compilation.bytecode || !compilation.sourceMap) return null;
@@ -32,7 +46,7 @@ function buildDebugProgram(compilation: CompilationResult): DebugProgram | null 
 }
 
 export function App() {
-  const [source, setSource] = useState(DEFAULT_SOURCE);
+  const [source, setSource] = useState<string>(() => decodeSourceFromHash() ?? DEFAULT_SOURCE);
   const [compilation, setCompilation] = useState<CompilationResult | null>(null);
   const [output, setOutput] = useState('');
   const [runStatus, setRunStatus] = useState('');
@@ -125,6 +139,13 @@ export function App() {
     if (controller) applySnapshot(fn(controller));
   };
 
+  const share = () => {
+    const url = `${window.location.origin}${window.location.pathname}#${SHARE_PREFIX}${encodeSource(source)}`;
+    window.history.replaceState(null, '', url);
+    void navigator.clipboard?.writeText(url);
+    setRunStatus('Shareable link copied to clipboard.');
+  };
+
   const actions: DebugActions = {
     stepInstruction: withController((c) => c.stepInstruction()),
     stepLine: withController((c) => c.stepLine()),
@@ -155,6 +176,9 @@ export function App() {
           </button>
           <button onClick={startDebug} data-testid="debug">
             Debug
+          </button>
+          <button onClick={share} data-testid="share">
+            Share
           </button>
         </div>
       </header>
