@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import type { RegisterFileSnapshot } from '@novaos/cpu';
 import { compileToyC, type CompilationResult } from '@novaos/compiler';
 import { createProgramRunner, type ProgramRunner } from '@novaos/simulator';
 import {
@@ -35,9 +36,19 @@ export function App() {
   const [output, setOutput] = useState('');
   const [runStatus, setRunStatus] = useState('');
   const [dbgSnapshot, setDbgSnapshot] = useState<DebuggerSnapshot | null>(null);
+  const [prevRegisters, setPrevRegisters] = useState<RegisterFileSnapshot | null>(null);
 
   const runnerRef = useRef<ProgramRunner>(createProgramRunner());
   const dbgRef = useRef<DebugController | null>(null);
+  const snapRef = useRef<DebuggerSnapshot | null>(null);
+
+  // Publish a new debugger snapshot, remembering the prior registers so the UI
+  // can highlight what changed on the last step.
+  const applySnapshot = (next: DebuggerSnapshot) => {
+    setPrevRegisters(snapRef.current ? snapRef.current.registers : null);
+    snapRef.current = next;
+    setDbgSnapshot(next);
+  };
 
   const compile = (): CompilationResult => {
     const result = compileToyC(source, { fileName: FILE });
@@ -62,19 +73,22 @@ export function App() {
     const program = buildDebugProgram(result);
     if (!program) {
       dbgRef.current = null;
+      snapRef.current = null;
+      setPrevRegisters(null);
       setDbgSnapshot(null);
       setRunStatus('Cannot debug: fix compile errors first.');
       return;
     }
     const controller = createDebugger(program);
     dbgRef.current = controller;
-    setDbgSnapshot(controller.getSnapshot());
+    snapRef.current = null;
+    applySnapshot(controller.getSnapshot());
     setRunStatus('Debug session started (paused at entry).');
   };
 
   const withController = (fn: (c: DebugController) => DebuggerSnapshot) => () => {
     const controller = dbgRef.current;
-    if (controller) setDbgSnapshot(fn(controller));
+    if (controller) applySnapshot(fn(controller));
   };
 
   const actions: DebugActions = {
@@ -135,7 +149,12 @@ export function App() {
         </div>
 
         <div className="column">
-          <DebuggerPanel snapshot={dbgSnapshot} source={source} actions={actions} />
+          <DebuggerPanel
+            snapshot={dbgSnapshot}
+            previousRegisters={prevRegisters}
+            source={source}
+            actions={actions}
+          />
         </div>
       </div>
     </div>
