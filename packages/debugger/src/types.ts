@@ -78,6 +78,22 @@ export interface TimelineSummary {
   readonly eventsByType: Record<string, number>;
 }
 
+export interface ProcessRow {
+  readonly pid: number;
+  readonly name: string;
+  readonly state: string;
+  readonly instructionsExecuted: number;
+}
+
+/** A UI-friendly view of the kernel's process table and scheduler state. */
+export interface ProcessView {
+  readonly processes: ProcessRow[];
+  readonly runningPid: number | null;
+  readonly readyQueue: number[];
+  readonly algorithm: string;
+  readonly quantumTicks: number | null;
+}
+
 export interface DebuggerSnapshot {
   readonly state: DebuggerState;
   readonly pauseReason: PauseReason;

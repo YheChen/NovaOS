@@ -11,6 +11,7 @@ import type {
   DebuggerSnapshot,
   DebuggerState,
   PauseReason,
+  ProcessView,
   ReplayConfig,
   TimelineSummary,
   WatchResult,
@@ -64,6 +65,8 @@ export interface DebugController {
   addressesForLine(line: number): number[];
   /** Read a 32-bit word from the debuggee's live memory (for the memory view). */
   readWord(address: number): number | null;
+  /** The kernel process table + scheduler state, for the process visualizer. */
+  getProcessView(): ProcessView;
 }
 
 const DEFAULT_MAX_STEPS = 200_000;
@@ -503,5 +506,22 @@ export function createDebugger(program: DebugProgram, config: ReplayConfig = {})
     lineForAddress,
     addressesForLine,
     readWord: (address) => runtime.readWord(address),
+    getProcessView() {
+      const table = runtime.getProcessTable();
+      const sched = runtime.getSchedulerSnapshot();
+      const num = (id: { valueOf(): number } | number): number => id as unknown as number;
+      return {
+        processes: table.processes.map((p) => ({
+          pid: num(p.pid),
+          name: p.name,
+          state: p.state,
+          instructionsExecuted: p.instructionsExecuted,
+        })),
+        runningPid: table.currentPid === null ? null : num(table.currentPid),
+        readyQueue: sched.readyQueue.map(num),
+        algorithm: sched.algorithmName,
+        quantumTicks: sched.quantumTicks,
+      };
+    },
   };
 }
