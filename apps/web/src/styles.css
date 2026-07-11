@@ -235,6 +235,16 @@ th {
 tr.hl td {
   background: rgba(88, 166, 255, 0.12);
 }
+.bp-glyph {
+  background: var(--red);
+  border-radius: 50%;
+  width: 10px !important;
+  height: 10px !important;
+  margin: 3px 0 0 4px;
+}
+.current-exec-line {
+  background: rgba(210, 153, 34, 0.18);
+}
 .cfg-block {
   border: 1px solid var(--border);
   border-left: 3px solid var(--accent);
