@@ -89,6 +89,9 @@ importers:
       '@novaos/debugger':
         specifier: workspace:*
         version: link:../../packages/debugger
+      '@novaos/examples':
+        specifier: workspace:*
+        version: link:../../packages/examples
       '@novaos/shared':
         specifier: workspace:*
         version: link:../../packages/shared

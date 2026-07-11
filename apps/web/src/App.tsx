@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import type { RegisterFileSnapshot } from '@novaos/cpu';
 import { compileToyC, type CompilationResult } from '@novaos/compiler';
 import { createProgramRunner, type ProgramRunner } from '@novaos/simulator';
+import { EXAMPLES } from '@novaos/examples';
 import {
   createDebugger,
   type DebugController,
@@ -139,6 +140,19 @@ export function App() {
     if (controller) applySnapshot(fn(controller));
   };
 
+  const loadExample = (id: string) => {
+    const ex = EXAMPLES.find((e) => e.id === id);
+    if (!ex) return;
+    setSource(ex.source);
+    setCompilation(null);
+    setOutput('');
+    setRunStatus(`Loaded example: ${ex.title}`);
+    dbgRef.current = null;
+    snapRef.current = null;
+    setDbgSnapshot(null);
+    setPrevRegisters(null);
+  };
+
   const share = () => {
     const url = `${window.location.origin}${window.location.pathname}#${SHARE_PREFIX}${encodeSource(source)}`;
     window.history.replaceState(null, '', url);
@@ -168,6 +182,22 @@ export function App() {
         <h1>NovaOS</h1>
         <span className="tag">deterministic OS laboratory</span>
         <div className="toolbar">
+          <select
+            className="gallery"
+            value=""
+            onChange={(e) => loadExample(e.target.value)}
+            data-testid="gallery"
+            aria-label="Load an example program"
+          >
+            <option value="" disabled>
+              Load example
+            </option>
+            {EXAMPLES.filter((e) => e.language === 'toy-c').map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.title}
+              </option>
+            ))}
+          </select>
           <button className="primary" onClick={compile} data-testid="compile">
             Compile
           </button>

@@ -15,6 +15,7 @@
     "@novaos/compiler": "workspace:*",
     "@novaos/cpu": "workspace:*",
     "@novaos/debugger": "workspace:*",
+    "@novaos/examples": "workspace:*",
     "@novaos/shared": "workspace:*",
     "@novaos/simulator": "workspace:*",
     "@monaco-editor/react": "^4.7.0",
