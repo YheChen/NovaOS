@@ -56,6 +56,8 @@ export const Opcode = {
   LOAD: 28, // LOAD dst, base, disp8   dst = mem[base + disp]
   STORE: 29, // STORE src, base, disp8  mem[base + disp] = src
 
+  LDIH: 30, // LDIH dst, imm16    dst = ((B<<8)|C) << 16  (load high half of a 32-bit constant)
+
   HALT: 255,
 } as const;
 
@@ -92,6 +94,7 @@ export const MNEMONICS: Record<Opcode, string> = {
   [Opcode.RET]: 'RET',
   [Opcode.LOAD]: 'LOAD',
   [Opcode.STORE]: 'STORE',
+  [Opcode.LDIH]: 'LDIH',
   [Opcode.HALT]: 'HALT',
 };
 

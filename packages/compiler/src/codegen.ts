@@ -108,7 +108,16 @@ function lowerInstruction(
   const s = ins.span;
   switch (ins.kind) {
     case 'const':
-      emit(ins.value <= 255 ? `  MOV R0, ${ins.value}` : `  LDI R0, ${ins.value}`, s);
+      if (ins.value <= 255) {
+        emit(`  MOV R0, ${ins.value}`, s);
+      } else if (ins.value <= 0xffff) {
+        emit(`  LDI R0, ${ins.value}`, s);
+      } else {
+        // Compose a full 32-bit constant: R0 = (high << 16) + low.
+        emit(`  LDI R1, ${ins.value & 0xffff}`, s);
+        emit(`  LDIH R0, ${(ins.value >>> 16) & 0xffff}`, s);
+        emit('  ADD R0, R0, R1', s);
+      }
       emit(`  STORE R0, BP, ${tempOff(ins.target)}`, s);
       break;
     case 'load':

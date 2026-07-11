@@ -13,8 +13,8 @@ const isAlpha = (ch: string): boolean =>
   (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch === '_';
 const isAlphaNum = (ch: string): boolean => isAlpha(ch) || isDigit(ch);
 
-/** The maximum integer literal the Version 1 ISA can load (16-bit via `LDI`). */
-export const MAX_INT_LITERAL = 65535;
+/** The maximum integer literal (unsigned 32-bit; composed via LDI + LDIH + ADD). */
+export const MAX_INT_LITERAL = 4294967295;
 
 /** Tokenize Toy C source, preserving source spans for diagnostics and source maps. */
 export function lex(source: string, fileId?: FileId): LexResult {
