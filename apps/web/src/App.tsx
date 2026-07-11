@@ -155,6 +155,7 @@ export function App() {
             previousRegisters={prevRegisters}
             totalSteps={dbgRef.current?.getTotalSteps() ?? 0}
             readWord={(a) => dbgRef.current?.readWord(a) ?? null}
+            processView={dbgSnapshot ? (dbgRef.current?.getProcessView() ?? null) : null}
             source={source}
             actions={actions}
           />
