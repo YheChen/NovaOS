@@ -167,6 +167,16 @@ pre {
   background: var(--panel-2);
   color: var(--accent);
 }
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reg-changed td {
+    animation: none;
+  }
+}
 table {
   width: 100%;
   border-collapse: collapse;

@@ -50,8 +50,17 @@ export function Inspector({
         {STAGES.map((s) => (
           <span
             key={s}
+            role="tab"
+            tabIndex={0}
+            aria-selected={s === stage}
             className={`tab ${s === stage ? 'active' : ''}`}
             onClick={() => setStage(s)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setStage(s);
+              }
+            }}
           >
             {s}
           </span>
