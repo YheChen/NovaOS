@@ -56,6 +56,16 @@ function foldBinary(op: BinaryOperator, a: number, b: number): number | null {
       return a !== 0 && b !== 0 ? 1 : 0;
     case '||':
       return a !== 0 || b !== 0 ? 1 : 0;
+    case '&':
+      return mask32(a & b);
+    case '|':
+      return mask32(a | b);
+    case '^':
+      return mask32(a ^ b);
+    case '<<':
+      return mask32(a << (b & 31));
+    case '>>':
+      return mask32(a >>> (b & 31));
   }
 }
 

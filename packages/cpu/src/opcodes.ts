@@ -58,6 +58,12 @@ export const Opcode = {
 
   LDIH: 30, // LDIH dst, imm16    dst = ((B<<8)|C) << 16  (load high half of a 32-bit constant)
 
+  BAND: 31, // BAND dst, a, b    dst = a & b   (bitwise)
+  BOR: 32, // BOR  dst, a, b     dst = a | b
+  BXOR: 33, // BXOR dst, a, b    dst = a ^ b
+  SHL: 34, // SHL  dst, a, b     dst = a << (b & 31)
+  SHR: 35, // SHR  dst, a, b     dst = a >>> (b & 31)  (logical)
+
   HALT: 255,
 } as const;
 
@@ -95,6 +101,11 @@ export const MNEMONICS: Record<Opcode, string> = {
   [Opcode.LOAD]: 'LOAD',
   [Opcode.STORE]: 'STORE',
   [Opcode.LDIH]: 'LDIH',
+  [Opcode.BAND]: 'BAND',
+  [Opcode.BOR]: 'BOR',
+  [Opcode.BXOR]: 'BXOR',
+  [Opcode.SHL]: 'SHL',
+  [Opcode.SHR]: 'SHR',
   [Opcode.HALT]: 'HALT',
 };
 
