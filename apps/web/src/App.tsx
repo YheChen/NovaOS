@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { RegisterFileSnapshot } from '@novaos/cpu';
 import { compileToyC, type CompilationResult } from '@novaos/compiler';
 import { createProgramRunner, type ProgramRunner } from '@novaos/simulator';
@@ -38,6 +38,22 @@ function decodeSourceFromHash(): string | null {
   }
 }
 
+const STORAGE_KEY = 'novaos.source';
+
+// Initial program: a shared permalink wins, then the auto-saved local copy, then
+// the default. Persistence uses localStorage (the spec's "local provider").
+function loadInitialSource(): string {
+  const shared = decodeSourceFromHash();
+  if (shared !== null) return shared;
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved !== null) return saved;
+  } catch {
+    // localStorage unavailable (e.g. private mode); fall through.
+  }
+  return DEFAULT_SOURCE;
+}
+
 function buildDebugProgram(compilation: CompilationResult): DebugProgram | null {
   if (!compilation.bytecode || !compilation.sourceMap) return null;
   const lineMap = compilation.sourceMap.entries
@@ -47,7 +63,7 @@ function buildDebugProgram(compilation: CompilationResult): DebugProgram | null 
 }
 
 export function App() {
-  const [source, setSource] = useState<string>(() => decodeSourceFromHash() ?? DEFAULT_SOURCE);
+  const [source, setSource] = useState<string>(loadInitialSource);
   const [compilation, setCompilation] = useState<CompilationResult | null>(null);
   const [output, setOutput] = useState('');
   const [runStatus, setRunStatus] = useState('');
@@ -59,6 +75,15 @@ export function App() {
     copyPropagation: true,
     deadCodeElimination: true,
   });
+
+  // Auto-save the program so it survives a refresh.
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, source);
+    } catch {
+      // ignore quota / private-mode errors
+    }
+  }, [source]);
 
   const runnerRef = useRef<ProgramRunner>(createProgramRunner());
   const dbgRef = useRef<DebugController | null>(null);
