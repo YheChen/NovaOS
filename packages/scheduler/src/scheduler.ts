@@ -1,6 +1,6 @@
 import type { ProcessId, SimTime, DeterministicRandom } from '@novaos/shared';
 
-export type SchedulerId = 'fifo' | 'round-robin';
+export type SchedulerId = 'fifo' | 'round-robin' | 'priority' | 'lottery';
 
 /**
  * The minimal, read-only view of a process the scheduler needs. The kernel owns

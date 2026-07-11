@@ -15,7 +15,12 @@ import {
   asAddress,
   type ProcessId,
 } from '@novaos/shared';
-import { createFifoScheduler, createRoundRobinScheduler } from '@novaos/scheduler';
+import {
+  createFifoScheduler,
+  createRoundRobinScheduler,
+  createPriorityScheduler,
+  createLotteryScheduler,
+} from '@novaos/scheduler';
 import type { Scheduler, SchedulerSnapshot } from '@novaos/scheduler';
 import { createKernel } from '@novaos/kernel';
 import type {
@@ -29,7 +34,7 @@ import { createBufferedOutput } from './output';
 import type { ProgramImage } from './program';
 import * as runtimeEvents from './events';
 
-export type SchedulerChoice = 'fifo' | 'round-robin';
+export type SchedulerChoice = 'fifo' | 'round-robin' | 'priority' | 'lottery';
 
 export interface NovaRuntimeOptions {
   readonly ramBytes?: number;
@@ -77,9 +82,16 @@ const DEFAULT_MAX_STEPS = 1_000_000;
 const DEFAULT_QUANTUM = 4;
 
 function makeScheduler(choice: SchedulerChoice, quantumTicks: number): Scheduler {
-  return choice === 'round-robin'
-    ? createRoundRobinScheduler({ quantumTicks })
-    : createFifoScheduler();
+  switch (choice) {
+    case 'round-robin':
+      return createRoundRobinScheduler({ quantumTicks });
+    case 'priority':
+      return createPriorityScheduler();
+    case 'lottery':
+      return createLotteryScheduler({ quantumTicks });
+    default:
+      return createFifoScheduler();
+  }
 }
 
 /**
