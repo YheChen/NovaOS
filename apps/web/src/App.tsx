@@ -154,6 +154,7 @@ export function App() {
             snapshot={dbgSnapshot}
             previousRegisters={prevRegisters}
             totalSteps={dbgRef.current?.getTotalSteps() ?? 0}
+            readWord={(a) => dbgRef.current?.readWord(a) ?? null}
             source={source}
             actions={actions}
           />

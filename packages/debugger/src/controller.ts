@@ -62,6 +62,8 @@ export interface DebugController {
   // address/line helpers (for UI + tests)
   lineForAddress(address: number): number | null;
   addressesForLine(line: number): number[];
+  /** Read a 32-bit word from the debuggee's live memory (for the memory view). */
+  readWord(address: number): number | null;
 }
 
 const DEFAULT_MAX_STEPS = 200_000;
@@ -500,5 +502,6 @@ export function createDebugger(program: DebugProgram, config: ReplayConfig = {})
 
     lineForAddress,
     addressesForLine,
+    readWord: (address) => runtime.readWord(address),
   };
 }

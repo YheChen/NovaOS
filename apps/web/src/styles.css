@@ -232,6 +232,9 @@ th {
   cursor: pointer;
   margin: 4px 0 8px;
 }
+tr.hl td {
+  background: rgba(88, 166, 255, 0.12);
+}
 /* Register rows whose value changed on the last debugger step. */
 .reg-changed td {
   color: var(--yellow);
