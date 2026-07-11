@@ -99,6 +99,7 @@ export function App() {
     continueExecution: withController((c) => c.continueExecution()),
     stepBack: withController((c) => c.stepBack()),
     restart: withController((c) => c.restart()),
+    jumpToStep: (step) => withController((c) => c.jumpToStep(step))(),
     addWatch: (expression) =>
       withController((c) => {
         c.addWatch(expression);
@@ -152,6 +153,7 @@ export function App() {
           <DebuggerPanel
             snapshot={dbgSnapshot}
             previousRegisters={prevRegisters}
+            totalSteps={dbgRef.current?.getTotalSteps() ?? 0}
             source={source}
             actions={actions}
           />

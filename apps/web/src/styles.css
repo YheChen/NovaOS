@@ -226,6 +226,12 @@ th {
 .muted {
   color: var(--muted);
 }
+.scrubber {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+  margin: 4px 0 8px;
+}
 /* Register rows whose value changed on the last debugger step. */
 .reg-changed td {
   color: var(--yellow);
