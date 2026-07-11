@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { MNEMONICS, isOpcode } from '@novaos/cpu';
 import { formatIR, toInspectorSnapshot, type CompilationResult } from '@novaos/compiler';
+import { CfgView } from './CfgView';
 
 const STAGES = [
   'Diagnostics',
   'Tokens',
   'IR',
   'Optimized IR',
+  'CFG',
   'Assembly',
   'Bytecode',
   'Symbols',
@@ -49,6 +51,7 @@ export function Inspector({ compilation }: { compilation: CompilationResult | nu
         {stage === 'Optimized IR' && (
           <pre>{snap.optimizedIr ? formatIR(snap.optimizedIr) : '(none)'}</pre>
         )}
+        {stage === 'CFG' && <CfgView module={snap.optimizedIr ?? snap.ir} />}
         {stage === 'Assembly' && <pre>{snap.assembly ?? '(none)'}</pre>}
         {stage === 'Bytecode' && <Bytecode compilation={compilation} />}
         {stage === 'Symbols' && <Symbols compilation={compilation} />}

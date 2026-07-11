@@ -235,6 +235,25 @@ th {
 tr.hl td {
   background: rgba(88, 166, 255, 0.12);
 }
+.cfg-block {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin: 6px 0;
+  background: var(--panel-2);
+}
+.cfg-block-label {
+  font-family: var(--mono);
+  color: var(--accent);
+  font-size: 12px;
+}
+.cfg-edges {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  margin-top: 2px;
+}
 /* Register rows whose value changed on the last debugger step. */
 .reg-changed td {
   color: var(--yellow);
