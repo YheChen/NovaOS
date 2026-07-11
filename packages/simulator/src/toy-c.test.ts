@@ -166,6 +166,10 @@ int main() {
     ).toBe('7');
   });
 
+  it('loads a 32-bit constant greater than 65535', () => {
+    expect(run('big.c', 'int main() { print(100000); return 0; }')).toBe('100000');
+  });
+
   it('returns a compile error (not a crash) for invalid Toy C', () => {
     const report = runner.run('bad.c', 'int main() { return y; }');
     expect(report.ok).toBe(false);

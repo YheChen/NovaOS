@@ -112,6 +112,12 @@ describe('instruction handlers', () => {
     expect(result.value.registerWrites).toEqual([{ name: 'r0', value: 0x1234 }]);
   });
 
+  it('LDIH loads the immediate into the high 16 bits', () => {
+    const result = HANDLERS[Opcode.LDIH](instr(Opcode.LDIH, 0, 0x00, 0x01), snapshotWith({}), MEM);
+    if (!result.ok) throw new Error('expected ok');
+    expect(result.value.registerWrites).toEqual([{ name: 'r0', value: 0x00010000 }]);
+  });
+
   it('MOVR copies between registers including SP/BP', () => {
     const result = HANDLERS[Opcode.MOVR](instr(Opcode.MOVR, 9, 8), snapshotWith({ sp: 100 }), MEM);
     if (!result.ok) throw new Error('expected ok');

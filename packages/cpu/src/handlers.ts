@@ -140,6 +140,21 @@ const ldi: InstructionHandler = (instruction, registers) => {
   });
 };
 
+// LDIH dst, imm16 — load a 16-bit immediate into the high half (bits 16-31), so
+// a 32-bit constant can be composed as LDI(low) + LDIH(high) + ADD.
+const ldih: InstructionHandler = (instruction, registers) => {
+  const dst = gpr(instruction.a);
+  if (!dst.ok) return dst;
+  const value = mask32(((instruction.b << 8) | instruction.c) << 16);
+  return ok({
+    registerWrites: [{ name: dst.value, value }],
+    flags: computeMoveFlags(registers.flags, value),
+    output: null,
+    halt: false,
+    cycles: 1,
+  });
+};
+
 // ADD dst, lhs, rhs — dst = lhs + rhs; updates Z, N, C, O. Accepts SP/BP so the
 // compiler can do stack-pointer arithmetic.
 const add: InstructionHandler = (instruction, registers) => {
@@ -413,6 +428,7 @@ export const HANDLERS: Record<Opcode, InstructionHandler> = {
   [Opcode.MOV]: mov,
   [Opcode.MOVR]: movr,
   [Opcode.LDI]: ldi,
+  [Opcode.LDIH]: ldih,
   [Opcode.ADD]: add,
   [Opcode.SUB]: sub,
   [Opcode.MUL]: mul,

@@ -24,6 +24,7 @@ export const INSTRUCTION_SPECS: Record<string, InstructionSpec> = {
   MOV: { opcode: Opcode.MOV, operands: ['register', 'immediate'] },
   MOVR: { opcode: Opcode.MOVR, operands: ['register', 'register'] },
   LDI: { opcode: Opcode.LDI, operands: ['register', 'imm16'] },
+  LDIH: { opcode: Opcode.LDIH, operands: ['register', 'imm16'] },
   ADD: { opcode: Opcode.ADD, operands: ['register', 'register', 'register'] },
   SUB: { opcode: Opcode.SUB, operands: ['register', 'register', 'register'] },
   MUL: { opcode: Opcode.MUL, operands: ['register', 'register', 'register'] },
