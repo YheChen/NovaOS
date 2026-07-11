@@ -29,7 +29,7 @@ import {
 } from './pcb';
 import { createPidAllocator } from './pid';
 import { SYSCALL_HANDLERS, syscallName } from './syscalls';
-import { createHeap, type Heap } from './heap';
+import { createHeap, type Heap, type HeapBlock } from './heap';
 import type { RegisterPort } from './register-port';
 import {
   type KernelStatus,
@@ -93,6 +93,8 @@ export interface Kernel {
   getProcessTable(): ProcessTableSnapshot;
   getSchedulerSnapshot(): ReturnType<Scheduler['snapshot']>;
   getMemoryMap(): ReturnType<Memory['memoryMap']>;
+  /** The process heap's allocated/free blocks, for the heap visualizer. */
+  getHeapBlocks(pid: ProcessId): HeapBlock[];
   getSnapshot(): KernelSnapshot;
 }
 
@@ -489,6 +491,7 @@ export function createKernel(deps: KernelDeps): Kernel {
 
     getSchedulerSnapshot: () => scheduler.snapshot(),
     getMemoryMap: () => memory.memoryMap(),
+    getHeapBlocks: (pid) => heapFor(pid)?.blocks() ?? [],
 
     getSnapshot() {
       return {

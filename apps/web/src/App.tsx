@@ -276,6 +276,7 @@ export function App() {
             totalSteps={dbgRef.current?.getTotalSteps() ?? 0}
             readWord={(a) => dbgRef.current?.readWord(a) ?? null}
             processView={dbgSnapshot ? (dbgRef.current?.getProcessView() ?? null) : null}
+            heapView={dbgSnapshot ? (dbgRef.current?.getHeapView() ?? null) : null}
             source={source}
             actions={actions}
           />

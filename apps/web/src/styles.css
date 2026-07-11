@@ -254,6 +254,23 @@ th {
 tr.hl td {
   background: rgba(88, 166, 255, 0.12);
 }
+.heap-bar {
+  display: flex;
+  height: 18px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 4px 0 8px;
+}
+.heap-block {
+  min-width: 4px;
+}
+.heap-block.used {
+  background: var(--accent);
+}
+.heap-block.free {
+  background: var(--panel-2);
+}
 .bp-glyph {
   background: var(--red);
   border-radius: 50%;
