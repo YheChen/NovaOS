@@ -174,9 +174,13 @@ export function parse(source: string, fileId?: FileId): ParseResult {
   };
 
   const parseLogicOr = (): ExpressionNode => binaryLevel(parseLogicAnd, ['||']);
-  const parseLogicAnd = (): ExpressionNode => binaryLevel(parseEquality, ['&&']);
+  const parseLogicAnd = (): ExpressionNode => binaryLevel(parseBitOr, ['&&']);
+  const parseBitOr = (): ExpressionNode => binaryLevel(parseBitXor, ['|']);
+  const parseBitXor = (): ExpressionNode => binaryLevel(parseBitAnd, ['^']);
+  const parseBitAnd = (): ExpressionNode => binaryLevel(parseEquality, ['&']);
   const parseEquality = (): ExpressionNode => binaryLevel(parseComparison, ['==', '!=']);
-  const parseComparison = (): ExpressionNode => binaryLevel(parseTerm, ['<', '<=', '>', '>=']);
+  const parseComparison = (): ExpressionNode => binaryLevel(parseShift, ['<', '<=', '>', '>=']);
+  const parseShift = (): ExpressionNode => binaryLevel(parseTerm, ['<<', '>>']);
   const parseTerm = (): ExpressionNode => binaryLevel(parseFactor, ['+', '-']);
   const parseFactor = (): ExpressionNode => binaryLevel(parseUnary, ['*', '/', '%']);
 

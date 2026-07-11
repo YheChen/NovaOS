@@ -34,7 +34,24 @@ export interface BooleanLiteralNode {
 }
 
 export type BinaryOperator =
-  '+' | '-' | '*' | '/' | '%' | '==' | '!=' | '<' | '<=' | '>' | '>=' | '&&' | '||';
+  | '+'
+  | '-'
+  | '*'
+  | '/'
+  | '%'
+  | '=='
+  | '!='
+  | '<'
+  | '<='
+  | '>'
+  | '>='
+  | '&&'
+  | '||'
+  | '&'
+  | '|'
+  | '^'
+  | '<<'
+  | '>>';
 
 export interface BinaryExpressionNode {
   readonly kind: 'BinaryExpression';

@@ -265,6 +265,11 @@ const cge: InstructionHandler = (i, r) =>
   aluBinary(i, r, (a, b) => ok(toSigned(a) >= toSigned(b) ? 1 : 0));
 const and: InstructionHandler = (i, r) => aluBinary(i, r, (a, b) => ok(a !== 0 && b !== 0 ? 1 : 0));
 const or: InstructionHandler = (i, r) => aluBinary(i, r, (a, b) => ok(a !== 0 || b !== 0 ? 1 : 0));
+const band: InstructionHandler = (i, r) => aluBinary(i, r, (a, b) => ok(a & b));
+const bor: InstructionHandler = (i, r) => aluBinary(i, r, (a, b) => ok(a | b));
+const bxor: InstructionHandler = (i, r) => aluBinary(i, r, (a, b) => ok(a ^ b));
+const shl: InstructionHandler = (i, r) => aluBinary(i, r, (a, b) => ok(a << (b & 31)));
+const shr: InstructionHandler = (i, r) => aluBinary(i, r, (a, b) => ok(a >>> (b & 31)));
 
 // PRINT src — write the register's value to the output device as a decimal line.
 const print: InstructionHandler = (instruction, registers) => {
@@ -444,6 +449,11 @@ export const HANDLERS: Record<Opcode, InstructionHandler> = {
   [Opcode.CGE]: cge,
   [Opcode.AND]: and,
   [Opcode.OR]: or,
+  [Opcode.BAND]: band,
+  [Opcode.BOR]: bor,
+  [Opcode.BXOR]: bxor,
+  [Opcode.SHL]: shl,
+  [Opcode.SHR]: shr,
   [Opcode.JMP]: jmp,
   [Opcode.JZ]: jz,
   [Opcode.JNZ]: jnz,

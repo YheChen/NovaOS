@@ -32,6 +32,8 @@ export const OPERATORS = [
   '>=',
   '&&',
   '||',
+  '<<',
+  '>>',
   '+=',
   '-=',
   '*=',
@@ -46,6 +48,9 @@ export const OPERATORS = [
   '<',
   '>',
   '!',
+  '&',
+  '|',
+  '^',
 ] as const;
 
 export const PUNCTUATION = new Set(['(', ')', '{', '}', ',', ';']);

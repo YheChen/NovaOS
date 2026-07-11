@@ -23,6 +23,11 @@ const BINARY_OPCODE: Record<BinaryOperator, string> = {
   '>=': 'CGE',
   '&&': 'AND',
   '||': 'OR',
+  '&': 'BAND',
+  '|': 'BOR',
+  '^': 'BXOR',
+  '<<': 'SHL',
+  '>>': 'SHR',
 };
 
 const MAX_SLOTS = 32; // displacement must fit a signed byte: -4*(31+1) = -128

@@ -170,6 +170,19 @@ int main() {
     expect(run('big.c', 'int main() { print(100000); return 0; }')).toBe('100000');
   });
 
+  it('computes bitwise operators', () => {
+    expect(run('band.c', 'int main() { print(6 & 3); return 0; }')).toBe('2');
+    expect(run('bor.c', 'int main() { print(5 | 2); return 0; }')).toBe('7');
+    expect(run('bxor.c', 'int main() { print(6 ^ 3); return 0; }')).toBe('5');
+    expect(run('shl.c', 'int main() { print(1 << 4); return 0; }')).toBe('16');
+    expect(run('shr.c', 'int main() { print(64 >> 2); return 0; }')).toBe('16');
+  });
+
+  it('respects bitwise vs arithmetic precedence (1 | 2 & 2 => 3)', () => {
+    // & binds tighter than |, so this is 1 | (2 & 2) = 1 | 2 = 3.
+    expect(run('prec.c', 'int main() { print(1 | 2 & 2); return 0; }')).toBe('3');
+  });
+
   it('returns a compile error (not a crash) for invalid Toy C', () => {
     const report = runner.run('bad.c', 'int main() { return y; }');
     expect(report.ok).toBe(false);
