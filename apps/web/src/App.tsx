@@ -10,6 +10,7 @@ import {
 } from '@novaos/debugger';
 import { Inspector } from './components/Inspector';
 import { DebuggerPanel, type DebugActions } from './components/DebuggerPanel';
+import { CodeEditor } from './components/CodeEditor';
 
 const DEFAULT_SOURCE = `int main() {
   int a = 5;
@@ -37,10 +38,12 @@ export function App() {
   const [runStatus, setRunStatus] = useState('');
   const [dbgSnapshot, setDbgSnapshot] = useState<DebuggerSnapshot | null>(null);
   const [prevRegisters, setPrevRegisters] = useState<RegisterFileSnapshot | null>(null);
+  const [breakpointLines, setBreakpointLines] = useState<number[]>([]);
 
   const runnerRef = useRef<ProgramRunner>(createProgramRunner());
   const dbgRef = useRef<DebugController | null>(null);
   const snapRef = useRef<DebuggerSnapshot | null>(null);
+  const bpIdsRef = useRef<Map<number, number>>(new Map());
 
   // Publish a new debugger snapshot, remembering the prior registers so the UI
   // can highlight what changed on the last step.
@@ -81,9 +84,29 @@ export function App() {
     }
     const controller = createDebugger(program);
     dbgRef.current = controller;
+    // Apply the gutter breakpoints to the fresh session.
+    bpIdsRef.current = new Map();
+    for (const line of breakpointLines) {
+      bpIdsRef.current.set(line, controller.addLineBreakpoint(line));
+    }
     snapRef.current = null;
     applySnapshot(controller.getSnapshot());
     setRunStatus('Debug session started (paused at entry).');
+  };
+
+  const toggleBreakpoint = (line: number) => {
+    setBreakpointLines((lines) => {
+      const has = lines.includes(line);
+      const controller = dbgRef.current;
+      if (has) {
+        const id = bpIdsRef.current.get(line);
+        if (controller && id !== undefined) controller.removeBreakpoint(id);
+        bpIdsRef.current.delete(line);
+        return lines.filter((l) => l !== line);
+      }
+      if (controller) bpIdsRef.current.set(line, controller.addLineBreakpoint(line));
+      return [...lines, line].sort((a, b) => a - b);
+    });
   };
 
   const withController = (fn: (c: DebugController) => DebuggerSnapshot) => () => {
@@ -129,13 +152,16 @@ export function App() {
         <div className="column">
           <div className="panel" style={{ flex: 1, minHeight: 0 }}>
             <div className="panel-title">Editor: {FILE}</div>
-            <textarea
-              className="editor"
-              value={source}
-              spellCheck={false}
-              onChange={(e) => setSource(e.target.value)}
-              data-testid="editor"
-            />
+            <div style={{ flex: 1, minHeight: 0 }} data-testid="editor">
+              <CodeEditor
+                value={source}
+                onChange={setSource}
+                diagnostics={compilation?.diagnostics ?? []}
+                currentLine={dbgSnapshot?.currentLocation?.sourceLine ?? null}
+                breakpointLines={breakpointLines}
+                onToggleBreakpoint={toggleBreakpoint}
+              />
+            </div>
           </div>
           <div className="panel">
             <div className="panel-title">Output {runStatus && `· ${runStatus}`}</div>
