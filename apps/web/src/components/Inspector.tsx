@@ -8,6 +8,7 @@ const STAGES = [
   'Tokens',
   'IR',
   'Optimized IR',
+  'Optimizer',
   'CFG',
   'Assembly',
   'Bytecode',
@@ -15,7 +16,21 @@ const STAGES = [
 ] as const;
 type Stage = (typeof STAGES)[number];
 
-export function Inspector({ compilation }: { compilation: CompilationResult | null }) {
+export interface OptimizeFlags {
+  constantFolding: boolean;
+  copyPropagation: boolean;
+  deadCodeElimination: boolean;
+}
+
+export function Inspector({
+  compilation,
+  optimize,
+  onToggleOptimization,
+}: {
+  compilation: CompilationResult | null;
+  optimize?: OptimizeFlags;
+  onToggleOptimization?: (key: keyof OptimizeFlags) => void;
+}) {
   const [stage, setStage] = useState<Stage>('Diagnostics');
 
   if (!compilation) {
@@ -50,6 +65,13 @@ export function Inspector({ compilation }: { compilation: CompilationResult | nu
         {stage === 'IR' && <pre>{snap.ir ? formatIR(snap.ir) : '(no IR; fix errors first)'}</pre>}
         {stage === 'Optimized IR' && (
           <pre>{snap.optimizedIr ? formatIR(snap.optimizedIr) : '(none)'}</pre>
+        )}
+        {stage === 'Optimizer' && (
+          <Optimizer
+            compilation={compilation}
+            optimize={optimize}
+            onToggle={onToggleOptimization}
+          />
         )}
         {stage === 'CFG' && <CfgView module={snap.optimizedIr ?? snap.ir} />}
         {stage === 'Assembly' && <pre>{snap.assembly ?? '(none)'}</pre>}
@@ -107,6 +129,55 @@ function Bytecode({ compilation }: { compilation: CompilationResult }) {
         ))}
       </tbody>
     </table>
+  );
+}
+
+const PASS_LABELS: { key: keyof OptimizeFlags; label: string }[] = [
+  { key: 'constantFolding', label: 'Constant Folding' },
+  { key: 'copyPropagation', label: 'Copy Propagation' },
+  { key: 'deadCodeElimination', label: 'Dead Code Elimination' },
+];
+
+function Optimizer({
+  compilation,
+  optimize,
+  onToggle,
+}: {
+  compilation: CompilationResult | null;
+  optimize?: OptimizeFlags;
+  onToggle?: (key: keyof OptimizeFlags) => void;
+}) {
+  if (!optimize || !onToggle) return <p className="muted">(optimizer controls unavailable)</p>;
+  return (
+    <div>
+      <p className="muted">Toggle each pass and recompile to see its effect on the IR.</p>
+      {PASS_LABELS.map(({ key, label }) => (
+        <label key={key} style={{ display: 'block', margin: '3px 0', cursor: 'pointer' }}>
+          <input type="checkbox" checked={optimize[key]} onChange={() => onToggle(key)} /> {label}
+        </label>
+      ))}
+      <h4 className="muted">Applied this compile</h4>
+      {!compilation || compilation.optimizationPasses.length === 0 ? (
+        <p className="empty">(no passes ran)</p>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th>pass</th>
+              <th>changes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {compilation.optimizationPasses.map((p) => (
+              <tr key={p.id}>
+                <td>{p.name}</td>
+                <td>{p.changes}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
   );
 }
 

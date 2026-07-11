@@ -39,6 +39,11 @@ export function App() {
   const [dbgSnapshot, setDbgSnapshot] = useState<DebuggerSnapshot | null>(null);
   const [prevRegisters, setPrevRegisters] = useState<RegisterFileSnapshot | null>(null);
   const [breakpointLines, setBreakpointLines] = useState<number[]>([]);
+  const [optimize, setOptimize] = useState({
+    constantFolding: true,
+    copyPropagation: true,
+    deadCodeElimination: true,
+  });
 
   const runnerRef = useRef<ProgramRunner>(createProgramRunner());
   const dbgRef = useRef<DebugController | null>(null);
@@ -54,9 +59,15 @@ export function App() {
   };
 
   const compile = (): CompilationResult => {
-    const result = compileToyC(source, { fileName: FILE });
+    const result = compileToyC(source, { fileName: FILE, optimize });
     setCompilation(result);
     return result;
+  };
+
+  const toggleOptimization = (key: keyof typeof optimize) => {
+    const next = { ...optimize, [key]: !optimize[key] };
+    setOptimize(next);
+    setCompilation(compileToyC(source, { fileName: FILE, optimize: next }));
   };
 
   const run = () => {
@@ -172,7 +183,11 @@ export function App() {
         </div>
 
         <div className="column">
-          <Inspector compilation={compilation} />
+          <Inspector
+            compilation={compilation}
+            optimize={optimize}
+            onToggleOptimization={toggleOptimization}
+          />
         </div>
 
         <div className="column">
