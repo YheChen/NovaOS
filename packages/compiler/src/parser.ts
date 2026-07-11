@@ -248,8 +248,10 @@ export function parse(source: string, fileId?: FileId): ParseResult {
     const open = expect('punctuation', '{', '`{`');
     const statements: StatementNode[] = [];
     while (!check('punctuation', '}') && !atEnd()) {
+      const before = current;
       const stmt = parseStatementRecovering();
       if (stmt) statements.push(stmt);
+      if (current === before) advance(); // guarantee progress on unrecoverable input
     }
     const close = expect('punctuation', '}', '`}` to close the block');
     return {
@@ -399,7 +401,8 @@ export function parse(source: string, fileId?: FileId): ParseResult {
 
   const synchronize = (): void => {
     while (!atEnd()) {
-      if (previous().lexeme === ';' || previous().lexeme === '}') return;
+      const prev = current > 0 ? stream[current - 1] : undefined;
+      if (prev && (prev.lexeme === ';' || prev.lexeme === '}')) return;
       const t = peek();
       if (
         t.kind === 'keyword' &&
@@ -479,6 +482,7 @@ export function parse(source: string, fileId?: FileId): ParseResult {
   const startSpan = peek().span;
   const declarations: DeclarationNode[] = [];
   while (!atEnd()) {
+    const before = current;
     try {
       declarations.push(parseDeclaration());
     } catch (e) {
@@ -488,6 +492,7 @@ export function parse(source: string, fileId?: FileId): ParseResult {
         throw e;
       }
     }
+    if (current === before) advance(); // guarantee progress on unrecoverable input
   }
   const endSpan = previous()?.span ?? startSpan;
   const program: ProgramNode = {
