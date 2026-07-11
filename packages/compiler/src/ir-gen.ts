@@ -1,7 +1,7 @@
 import { diagnostic, type Diagnostic, type SourceSpan } from '@novaos/shared';
 import type { ExpressionNode, FunctionDeclarationNode, ProgramNode, StatementNode } from './ast';
 import type { FunctionSymbol } from './semantics';
-import { typeFromName, type ToyType, VOID, BOOL } from './types';
+import { typeFromName, type ToyType, VOID, BOOL, INT } from './types';
 import type {
   IRBasicBlock,
   IRFunction,
@@ -99,8 +99,15 @@ function lowerFunction(
     current = block;
   };
 
+  const BUILTIN_RETURNS: Record<string, ToyType> = {
+    print: VOID,
+    free: VOID,
+    poke: VOID,
+    malloc: INT,
+    peek: INT,
+  };
   const returnTypeOf = (callee: string): ToyType =>
-    callee === 'print' ? VOID : (functions.get(callee)?.returnType ?? VOID);
+    BUILTIN_RETURNS[callee] ?? functions.get(callee)?.returnType ?? VOID;
 
   // --- Expressions ---------------------------------------------------------
   const genExpr = (expr: ExpressionNode): IRValueId => {

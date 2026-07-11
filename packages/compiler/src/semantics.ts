@@ -40,10 +40,19 @@ interface Scope {
   readonly parent: Scope | null;
 }
 
-const PRINT: FunctionSymbol = {
-  name: 'print',
-  returnType: VOID,
-  parameters: [{ name: 'value', type: INT }],
+const BUILTINS: Record<string, FunctionSymbol> = {
+  print: { name: 'print', returnType: VOID, parameters: [{ name: 'value', type: INT }] },
+  malloc: { name: 'malloc', returnType: INT, parameters: [{ name: 'size', type: INT }] },
+  free: { name: 'free', returnType: VOID, parameters: [{ name: 'ptr', type: INT }] },
+  peek: { name: 'peek', returnType: INT, parameters: [{ name: 'addr', type: INT }] },
+  poke: {
+    name: 'poke',
+    returnType: VOID,
+    parameters: [
+      { name: 'addr', type: INT },
+      { name: 'value', type: INT },
+    ],
+  },
 };
 
 export function analyze(program: ProgramNode): SemanticResult {
@@ -185,7 +194,7 @@ export function analyze(program: ProgramNode): SemanticResult {
         break;
       }
       case 'CallExpression': {
-        const fn = expr.callee.name === 'print' ? PRINT : functions.get(expr.callee.name);
+        const fn = BUILTINS[expr.callee.name] ?? functions.get(expr.callee.name);
         for (const arg of expr.args) typeOf(arg, scope);
         if (!fn) {
           err(`Undefined function \`${expr.callee.name}\`.`, expr.callee.span, 'sema/undefined');
