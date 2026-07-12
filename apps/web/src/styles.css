@@ -453,3 +453,28 @@ td.best,
   margin-right: 5px;
   vertical-align: middle;
 }
+
+/* --- Paging / virtual-memory lab --- */
+.seed-input {
+  width: 72px;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.mmu-steps {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.mmu-steps li {
+  margin-bottom: 2px;
+}
+.mmu-steps .statebadge {
+  margin-right: 6px;
+  font-size: 10px;
+}
