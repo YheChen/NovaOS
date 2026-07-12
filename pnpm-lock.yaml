@@ -243,6 +243,12 @@ importers:
         specifier: workspace:*
         version: link:../shared
 
+  packages/mmu:
+    dependencies:
+      '@novaos/shared':
+        specifier: workspace:*
+        version: link:../shared
+
   packages/scheduler:
     dependencies:
       '@novaos/shared':
