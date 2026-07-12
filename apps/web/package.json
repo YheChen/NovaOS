@@ -13,6 +13,7 @@
   "dependencies": {
     "@novaos/assembler": "workspace:*",
     "@novaos/compiler": "workspace:*",
+    "@novaos/concurrency": "workspace:*",
     "@novaos/cpu": "workspace:*",
     "@novaos/debugger": "workspace:*",
     "@novaos/examples": "workspace:*",

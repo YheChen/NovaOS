@@ -83,6 +83,9 @@ importers:
       '@novaos/compiler':
         specifier: workspace:*
         version: link:../../packages/compiler
+      '@novaos/concurrency':
+        specifier: workspace:*
+        version: link:../../packages/concurrency
       '@novaos/cpu':
         specifier: workspace:*
         version: link:../../packages/cpu
@@ -138,6 +141,16 @@ importers:
       '@novaos/shared':
         specifier: workspace:*
         version: link:../shared
+
+  packages/concurrency:
+    dependencies:
+      '@novaos/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      '@novaos/testing':
+        specifier: workspace:*
+        version: link:../testing
 
   packages/cpu:
     dependencies:
