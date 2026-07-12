@@ -20,6 +20,8 @@ import {
   createRoundRobinScheduler,
   createPriorityScheduler,
   createLotteryScheduler,
+  createSjfScheduler,
+  createSrtfScheduler,
 } from '@novaos/scheduler';
 import type { Scheduler, SchedulerSnapshot } from '@novaos/scheduler';
 import { createKernel } from '@novaos/kernel';
@@ -34,7 +36,7 @@ import { createBufferedOutput } from './output';
 import type { ProgramImage } from './program';
 import * as runtimeEvents from './events';
 
-export type SchedulerChoice = 'fifo' | 'round-robin' | 'priority' | 'lottery';
+export type SchedulerChoice = 'fifo' | 'round-robin' | 'priority' | 'lottery' | 'sjf' | 'srtf';
 
 export interface NovaRuntimeOptions {
   readonly ramBytes?: number;
@@ -89,6 +91,10 @@ function makeScheduler(choice: SchedulerChoice, quantumTicks: number): Scheduler
       return createPriorityScheduler();
     case 'lottery':
       return createLotteryScheduler({ quantumTicks });
+    case 'sjf':
+      return createSjfScheduler();
+    case 'srtf':
+      return createSrtfScheduler();
     default:
       return createFifoScheduler();
   }

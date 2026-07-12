@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createSimulationClock, asSimTime } from '@novaos/shared';
+import { createSimulationClock, asSimTime, type ProcessId } from '@novaos/shared';
 import {
   createCpu,
   encodeInstruction,
@@ -9,7 +9,12 @@ import {
   type OutputSink,
 } from '@novaos/cpu';
 import { createMemory } from '@novaos/memory';
-import { createFifoScheduler, createRoundRobinScheduler, type Scheduler } from '@novaos/scheduler';
+import {
+  createFifoScheduler,
+  createRoundRobinScheduler,
+  type Scheduler,
+  type SchedulableProcess,
+} from '@novaos/scheduler';
 import { createTestEventBus } from '@novaos/testing';
 import { createKernel, createPidAllocator, KERNEL_PID, canTransition, isTerminal } from './index';
 
@@ -192,5 +197,80 @@ describe('context switching', () => {
     expect(types).toContain('kernel.interrupt.raised');
     expect(types).toContain('kernel.context.switch');
     expect(types).toContain('kernel.interrupt.handled');
+  });
+});
+
+/** A minimal scheduler that records every process it is handed, for wiring tests. */
+function spyScheduler(seen: SchedulableProcess[]): Scheduler {
+  let queue: SchedulableProcess[] = [];
+  const contains = (pid: ProcessId): boolean => queue.some((p) => p.pid === pid);
+  return {
+    id: 'srtf',
+    name: 'spy',
+    quantumTicks: 1,
+    enqueue(process) {
+      seen.push(process);
+      if (!contains(process.pid)) queue.push(process);
+    },
+    remove(pid) {
+      queue = queue.filter((p) => p.pid !== pid);
+    },
+    pickNext() {
+      const next = queue.shift();
+      return next ? next.pid : null;
+    },
+    requeue(process) {
+      seen.push(process);
+      if (!contains(process.pid)) queue.push(process);
+    },
+    has: contains,
+    size: () => queue.length,
+    snapshot() {
+      return {
+        schedulerId: 'srtf',
+        algorithmName: 'spy',
+        quantumTicks: 1,
+        readyQueue: queue.map((p) => p.pid),
+        config: {},
+      };
+    },
+    restore() {},
+  };
+}
+
+describe('SJF/SRTF burst-estimate wiring', () => {
+  it('hands the scheduler remaining burst = estimate − cpuTicksUsed', () => {
+    const seen: SchedulableProcess[] = [];
+    const { kernel } = setup(spyScheduler(seen));
+    kernel.boot();
+    const created = kernel.createProcess({
+      name: 'job',
+      image: { code: HELLO() },
+      estimatedBurst: 10,
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    const pid = created.value;
+
+    // At admission cpuTicksUsed === 0, so the scheduler sees the full estimate.
+    expect(seen.at(-1)?.estimatedBurst).toBe(10);
+
+    // Run the job, burn 4 ticks, then force a requeue via the timer interrupt.
+    kernel.dispatch();
+    const pcb = kernel.getProcess(pid);
+    expect(pcb).toBeDefined();
+    if (pcb) pcb.accounting.cpuTicksUsed = 4;
+    kernel.handleTimerInterrupt();
+
+    // The requeue recomputes remaining burst: 10 − 4 = 6.
+    expect(seen.some((p) => p.estimatedBurst === 6)).toBe(true);
+  });
+
+  it('omits the estimate entirely when none was supplied', () => {
+    const seen: SchedulableProcess[] = [];
+    const { kernel } = setup(spyScheduler(seen));
+    kernel.boot();
+    kernel.createProcess({ name: 'job', image: { code: HELLO() } });
+    expect(seen.at(-1)?.estimatedBurst).toBeUndefined();
   });
 });
