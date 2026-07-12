@@ -403,3 +403,53 @@ tr.stale-write td {
   background: rgba(248, 81, 73, 0.16);
   color: var(--red);
 }
+
+/* --- Scheduler comparison lab --- */
+.conc-controls select.gallery {
+  margin-left: 4px;
+}
+td.best,
+.best {
+  color: var(--green);
+  font-weight: 600;
+}
+.gantt-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 3px 0;
+}
+.gantt-name {
+  width: 180px;
+  flex: 0 0 auto;
+  font-size: 11px;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gantt-track {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg);
+}
+.gantt-legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 5px;
+  vertical-align: middle;
+}

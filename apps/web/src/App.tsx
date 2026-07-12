@@ -13,6 +13,7 @@ import { Inspector } from './components/Inspector';
 import { DebuggerPanel, type DebugActions } from './components/DebuggerPanel';
 import { CodeEditor } from './components/CodeEditor';
 import { ConcurrencyLab } from './components/ConcurrencyLab';
+import { SchedulerComparison } from './components/SchedulerComparison';
 
 const DEFAULT_SOURCE = `int main() {
   int a = 5;
@@ -64,7 +65,7 @@ function buildDebugProgram(compilation: CompilationResult): DebugProgram | null 
 }
 
 export function App() {
-  const [view, setView] = useState<'workspace' | 'concurrency'>('workspace');
+  const [view, setView] = useState<'workspace' | 'concurrency' | 'scheduler'>('workspace');
   const [source, setSource] = useState<string>(loadInitialSource);
   const [compilation, setCompilation] = useState<CompilationResult | null>(null);
   const [output, setOutput] = useState('');
@@ -239,18 +240,27 @@ export function App() {
           </button>
           <button
             className={view === 'concurrency' ? 'primary' : undefined}
-            onClick={() => setView((v) => (v === 'workspace' ? 'concurrency' : 'workspace'))}
+            onClick={() => setView((v) => (v === 'concurrency' ? 'workspace' : 'concurrency'))}
             data-testid="toggle-concurrency"
             aria-pressed={view === 'concurrency'}
           >
             {view === 'concurrency' ? '← Workspace' : 'Concurrency Lab'}
           </button>
+          <button
+            className={view === 'scheduler' ? 'primary' : undefined}
+            onClick={() => setView((v) => (v === 'scheduler' ? 'workspace' : 'scheduler'))}
+            data-testid="toggle-scheduler"
+            aria-pressed={view === 'scheduler'}
+          >
+            {view === 'scheduler' ? '← Workspace' : 'Scheduler Lab'}
+          </button>
         </div>
       </header>
 
       {view === 'concurrency' && <ConcurrencyLab />}
+      {view === 'scheduler' && <SchedulerComparison />}
 
-      <div className="layout" style={view === 'concurrency' ? { display: 'none' } : undefined}>
+      <div className="layout" style={view !== 'workspace' ? { display: 'none' } : undefined}>
         <div className="column">
           <div className="panel" style={{ flex: 1, minHeight: 0 }}>
             <div className="panel-title">Editor: {FILE}</div>

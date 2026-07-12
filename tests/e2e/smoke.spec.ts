@@ -33,6 +33,21 @@ test('opens the concurrency lab and shows a reproducible race', async ({ page })
   await expect(page.getByTestId('race-unlocked')).toContainText('RACE');
 });
 
+test('scheduler lab compares algorithms with a Gantt chart', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('toggle-scheduler').click();
+  await expect(page.getByTestId('scheduler-lab')).toBeVisible();
+  // The metrics table lists every algorithm.
+  await expect(page.getByTestId('metrics-row-fifo')).toBeVisible();
+  await expect(page.getByTestId('metrics-row-srtf')).toBeVisible();
+  await expect(page.getByTestId('metrics-row-mlfq')).toBeVisible();
+  // The Gantt renders a strip per algorithm with at least one segment.
+  await expect(page.getByTestId('gantt-fifo').locator('rect').first()).toBeVisible();
+  // Toggling back restores the workspace editor.
+  await page.getByTestId('toggle-scheduler').click();
+  await expect(page.getByTestId('editor')).toBeVisible();
+});
+
 test('starts a paused debug session at entry', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('debug').click();

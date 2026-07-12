@@ -95,6 +95,9 @@ importers:
       '@novaos/examples':
         specifier: workspace:*
         version: link:../../packages/examples
+      '@novaos/scheduler':
+        specifier: workspace:*
+        version: link:../../packages/scheduler
       '@novaos/shared':
         specifier: workspace:*
         version: link:../../packages/shared
