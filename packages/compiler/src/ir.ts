@@ -11,6 +11,8 @@ export interface IRLocal {
   readonly name: string;
   readonly type: ToyType;
   readonly isParam: boolean;
+  /** Number of words this local occupies (1 for scalars, N for arrays). */
+  readonly size: number;
 }
 
 export type IRInstruction =
@@ -52,6 +54,20 @@ export type IRInstruction =
       readonly target: IRValueId | null;
       readonly callee: string;
       readonly args: readonly IRValueId[];
+      readonly span: SourceSpan;
+    }
+  | {
+      readonly kind: 'loadElem';
+      readonly target: IRValueId;
+      readonly local: number;
+      readonly index: IRValueId;
+      readonly span: SourceSpan;
+    }
+  | {
+      readonly kind: 'storeElem';
+      readonly local: number;
+      readonly index: IRValueId;
+      readonly value: IRValueId;
       readonly span: SourceSpan;
     }
   | { readonly kind: 'print'; readonly value: IRValueId; readonly span: SourceSpan };
@@ -123,6 +139,10 @@ function formatInstruction(ins: IRInstruction): string {
       return `t${ins.target} = ${ins.op}t${ins.operand}`;
     case 'call':
       return `${ins.target === null ? '' : `t${ins.target} = `}call ${ins.callee}(${ins.args.map((a) => `t${a}`).join(', ')})`;
+    case 'loadElem':
+      return `t${ins.target} = load @${ins.local}[t${ins.index}]`;
+    case 'storeElem':
+      return `store @${ins.local}[t${ins.index}] = t${ins.value}`;
     case 'print':
       return `print t${ins.value}`;
   }

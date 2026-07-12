@@ -63,7 +63,15 @@ function lowerFunction(
   emit: (text: string, span?: SourceSpan | null) => void,
   diagnostics: Diagnostic[],
 ): void {
-  const slotCount = fn.locals.length + fn.tempCount;
+  // Lay out locals accounting for array sizes; each local starts at a slot equal
+  // to the sum of the sizes of the locals before it.
+  const slotStart: number[] = [];
+  let localSlots = 0;
+  for (const l of fn.locals) {
+    slotStart[l.id] = localSlots;
+    localSlots += l.size;
+  }
+  const slotCount = localSlots + fn.tempCount;
   if (slotCount > MAX_SLOTS) {
     diagnostics.push(
       diagnostic({
@@ -77,11 +85,9 @@ function lowerFunction(
   }
 
   const frameBytes = slotCount * 4;
-  const localSlot = (localId: number): number => localId;
-  const tempSlot = (tempId: number): number => fn.locals.length + tempId;
   const off = (slot: number): number => -4 * (slot + 1);
-  const localOff = (localId: number): number => off(localSlot(localId));
-  const tempOff = (tempId: number): number => off(tempSlot(tempId));
+  const localOff = (localId: number): number => off(slotStart[localId] ?? localId);
+  const tempOff = (tempId: number): number => off(localSlots + tempId);
 
   emit(`${fn.name}:`, fn.sourceSpan);
   // Prologue.
@@ -177,6 +183,24 @@ function lowerInstruction(
       if (ins.target !== null) emit(`  STORE R0, BP, ${tempOff(ins.target)}`, s);
       break;
     }
+    case 'loadElem':
+      emit(`  LOAD R1, BP, ${tempOff(ins.index)}`, s); // R1 = index
+      emit('  MOV R2, 2', s);
+      emit('  SHL R1, R1, R2', s); // R1 = index * 4
+      emit('  MOVR R0, BP', s);
+      emit('  SUB R0, R0, R1', s); // R0 = BP - index*4
+      emit(`  LOAD R0, R0, ${localOff(ins.local)}`, s); // R0 = array[index]
+      emit(`  STORE R0, BP, ${tempOff(ins.target)}`, s);
+      break;
+    case 'storeElem':
+      emit(`  LOAD R1, BP, ${tempOff(ins.index)}`, s);
+      emit('  MOV R2, 2', s);
+      emit('  SHL R1, R1, R2', s); // R1 = index * 4
+      emit('  MOVR R0, BP', s);
+      emit('  SUB R0, R0, R1', s); // R0 = BP - index*4
+      emit(`  LOAD R2, BP, ${tempOff(ins.value)}`, s); // R2 = value
+      emit(`  STORE R2, R0, ${localOff(ins.local)}`, s); // array[index] = value
+      break;
     case 'print':
       emit(`  LOAD R0, BP, ${tempOff(ins.value)}`, s);
       emit('  SYSCALL 0', s);

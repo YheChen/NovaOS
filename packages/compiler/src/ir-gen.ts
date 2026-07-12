@@ -59,9 +59,9 @@ function lowerFunction(
   let current: BuildBlock | null = null;
 
   const freshTemp = (): IRValueId => nextTemp++;
-  const declareLocal = (name: string, type: ToyType, isParam: boolean): number => {
+  const declareLocal = (name: string, type: ToyType, isParam: boolean, size = 1): number => {
     const id = locals.length;
-    locals.push({ id, name, type, isParam });
+    locals.push({ id, name, type, isParam, size });
     (scopes[scopes.length - 1] as Map<string, number>).set(name, id);
     return id;
   };
@@ -149,7 +149,23 @@ function lowerFunction(
         emit({ kind: 'binary', op: expr.operator, target: t, left, right, span: expr.span });
         return t;
       }
+      case 'IndexExpression': {
+        const index = genExpr(expr.index);
+        const local = resolveLocal(expr.array.name);
+        const t = freshTemp();
+        if (local === undefined) emit({ kind: 'const', target: t, value: 0, span: expr.span });
+        else emit({ kind: 'loadElem', target: t, local, index, span: expr.span });
+        return t;
+      }
       case 'AssignmentExpression': {
+        if (expr.target.kind === 'IndexExpression') {
+          const index = genExpr(expr.target.index);
+          const value = genExpr(expr.value);
+          const local = resolveLocal(expr.target.array.name);
+          if (local !== undefined)
+            emit({ kind: 'storeElem', local, index, value, span: expr.span });
+          return value;
+        }
         const value = genExpr(expr.value);
         const local = resolveLocal(expr.target.name);
         if (local !== undefined) emit({ kind: 'store', local, value, span: expr.span });
@@ -223,6 +239,11 @@ function lowerFunction(
         break;
       }
       case 'VariableDeclaration': {
+        if (stmt.arraySize !== undefined) {
+          // Reserve N slots; array contents start uninitialized.
+          declareLocal(stmt.name.name, typeFromName(stmt.type.name), false, stmt.arraySize);
+          break;
+        }
         const local = declareLocal(stmt.name.name, typeFromName(stmt.type.name), false);
         const value = stmt.initializer ? genExpr(stmt.initializer) : zeroTemp(stmt.span);
         emit({ kind: 'store', local, value, span: stmt.span });

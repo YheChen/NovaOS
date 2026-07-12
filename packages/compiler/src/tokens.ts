@@ -53,4 +53,4 @@ export const OPERATORS = [
   '^',
 ] as const;
 
-export const PUNCTUATION = new Set(['(', ')', '{', '}', ',', ';']);
+export const PUNCTUATION = new Set(['(', ')', '{', '}', '[', ']', ',', ';']);

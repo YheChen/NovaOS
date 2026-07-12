@@ -94,6 +94,10 @@ describe('semantics', () => {
     expect(errs('int add(int a) { return a; }')).toContain('sema/no-main');
   });
 
+  it('rejects using an array as a scalar value', () => {
+    expect(errs('int main() { int a[2]; print(a); return 0; }')).toContain('sema/type-error');
+  });
+
   it('reports duplicate declarations', () => {
     expect(errs('int main() { int x = 1; int x = 2; return 0; }')).toContain('sema/duplicate');
   });

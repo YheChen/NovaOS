@@ -14,6 +14,8 @@ export interface VariableSymbol {
   readonly name: string;
   readonly type: ToyType;
   readonly kind: 'global' | 'local' | 'param';
+  /** Element count when this variable is a fixed-size array. */
+  readonly arraySize?: number;
 }
 
 export interface FunctionSymbol {
@@ -130,8 +132,29 @@ export function analyze(program: ProgramNode): SemanticResult {
         if (!sym) {
           err(`Undefined variable \`${expr.name}\`.`, expr.span, 'sema/undefined');
           result = ERROR;
+        } else if (sym.arraySize !== undefined) {
+          err(
+            `Array \`${expr.name}\` cannot be used as a value; index it with \`${expr.name}[i]\`.`,
+            expr.span,
+          );
+          result = ERROR;
         } else {
           result = sym.type;
+        }
+        break;
+      }
+      case 'IndexExpression': {
+        const sym = lookup(scope, expr.array.name);
+        const idxType = typeOf(expr.index, scope);
+        if (!sym) {
+          err(`Undefined variable \`${expr.array.name}\`.`, expr.array.span, 'sema/undefined');
+          result = ERROR;
+        } else if (sym.arraySize === undefined) {
+          err(`\`${expr.array.name}\` is not an array.`, expr.span);
+          result = ERROR;
+        } else {
+          if (!typesEqual(idxType, INT)) err('Array index must be int.', expr.index.span);
+          result = sym.type; // element type
         }
         break;
       }
@@ -176,16 +199,27 @@ export function analyze(program: ProgramNode): SemanticResult {
         break;
       }
       case 'AssignmentExpression': {
-        const sym = lookup(scope, expr.target.name);
+        const targetName =
+          expr.target.kind === 'Identifier' ? expr.target.name : expr.target.array.name;
+        const sym = lookup(scope, targetName);
         const valueType = typeOf(expr.value, scope);
-        if (!sym) {
-          err(`Undefined variable \`${expr.target.name}\`.`, expr.target.span, 'sema/undefined');
+        if (expr.target.kind === 'IndexExpression') {
+          const elemType = typeOf(expr.target, scope); // validates array + index, returns element type
+          if (!typesEqual(elemType, valueType)) {
+            err(`Cannot assign ${typeName(valueType)} to element of \`${targetName}\`.`, expr.span);
+          }
+          result = elemType;
+        } else if (!sym) {
+          err(`Undefined variable \`${targetName}\`.`, expr.target.span, 'sema/undefined');
+          result = ERROR;
+        } else if (sym.arraySize !== undefined) {
+          err(`Cannot assign to array \`${targetName}\` as a whole.`, expr.span);
           result = ERROR;
         } else {
           types.set(expr.target.id, sym.type);
           if (!typesEqual(sym.type, valueType)) {
             err(
-              `Cannot assign ${typeName(valueType)} to ${typeName(sym.type)} \`${expr.target.name}\`.`,
+              `Cannot assign ${typeName(valueType)} to ${typeName(sym.type)} \`${targetName}\`.`,
               expr.span,
             );
           }
@@ -245,6 +279,16 @@ export function analyze(program: ProgramNode): SemanticResult {
           );
         }
         const declared = typeFromName(stmt.type.name);
+        if (stmt.arraySize !== undefined) {
+          if (stmt.arraySize <= 0) err('Array size must be positive.', stmt.span);
+          scope.vars.set(stmt.name.name, {
+            name: stmt.name.name,
+            type: declared, // element type
+            kind: 'local',
+            arraySize: stmt.arraySize,
+          });
+          break;
+        }
         if (stmt.initializer) {
           const initType = typeOf(stmt.initializer, scope);
           if (!typesEqual(declared, initType)) {
