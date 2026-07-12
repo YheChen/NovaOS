@@ -67,6 +67,19 @@ test('@a11y paging view toggle is keyboard-reachable', async ({ page }) => {
   await expect(toggle).toHaveAttribute('aria-pressed', 'true');
 });
 
+test('@smoke filesystem persists across reloads (IndexedDB)', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('toggle-files').click();
+  await page.getByTestId('files-name').fill('persisted.txt');
+  await page.getByTestId('files-create').click();
+  await expect(page.getByTestId('files-status')).toContainText('saved');
+  await expect(page.getByTestId('files-listing')).toContainText('persisted.txt');
+
+  await page.reload(); // boot re-loads the FS from IndexedDB
+  await page.getByTestId('toggle-files').click();
+  await expect(page.getByTestId('files-listing')).toContainText('persisted.txt');
+});
+
 test('starts a paused debug session at entry', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('debug').click();

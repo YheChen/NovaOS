@@ -15,6 +15,7 @@ import { CodeEditor } from './components/CodeEditor';
 import { ConcurrencyLab } from './components/ConcurrencyLab';
 import { SchedulerComparison } from './components/SchedulerComparison';
 import { PagingVisualizer } from './components/PagingVisualizer';
+import { FilesLab } from './components/FilesLab';
 
 const DEFAULT_SOURCE = `int main() {
   int a = 5;
@@ -66,7 +67,7 @@ function buildDebugProgram(compilation: CompilationResult): DebugProgram | null 
 }
 
 export function App() {
-  const [view, setView] = useState<'workspace' | 'concurrency' | 'scheduler' | 'paging'>(
+  const [view, setView] = useState<'workspace' | 'concurrency' | 'scheduler' | 'paging' | 'files'>(
     'workspace',
   );
   const [source, setSource] = useState<string>(loadInitialSource);
@@ -265,12 +266,21 @@ export function App() {
           >
             {view === 'paging' ? '← Workspace' : 'Paging'}
           </button>
+          <button
+            className={view === 'files' ? 'primary' : undefined}
+            onClick={() => setView((v) => (v === 'files' ? 'workspace' : 'files'))}
+            data-testid="toggle-files"
+            aria-pressed={view === 'files'}
+          >
+            {view === 'files' ? '← Workspace' : 'Files'}
+          </button>
         </div>
       </header>
 
       {view === 'concurrency' && <ConcurrencyLab />}
       {view === 'scheduler' && <SchedulerComparison />}
       {view === 'paging' && <PagingVisualizer />}
+      {view === 'files' && <FilesLab />}
 
       <div className="layout" style={view !== 'workspace' ? { display: 'none' } : undefined}>
         <div className="column">
