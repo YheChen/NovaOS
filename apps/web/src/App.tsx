@@ -16,6 +16,7 @@ import { ConcurrencyLab } from './components/ConcurrencyLab';
 import { SchedulerComparison } from './components/SchedulerComparison';
 import { PagingVisualizer } from './components/PagingVisualizer';
 import { FilesLab } from './components/FilesLab';
+import { GuidedTutorials } from './components/GuidedTutorials';
 
 const DEFAULT_SOURCE = `int main() {
   int a = 5;
@@ -67,9 +68,9 @@ function buildDebugProgram(compilation: CompilationResult): DebugProgram | null 
 }
 
 export function App() {
-  const [view, setView] = useState<'workspace' | 'concurrency' | 'scheduler' | 'paging' | 'files'>(
-    'workspace',
-  );
+  const [view, setView] = useState<
+    'workspace' | 'concurrency' | 'scheduler' | 'paging' | 'files' | 'tutorials'
+  >('workspace');
   const [source, setSource] = useState<string>(loadInitialSource);
   const [compilation, setCompilation] = useState<CompilationResult | null>(null);
   const [output, setOutput] = useState('');
@@ -274,6 +275,14 @@ export function App() {
           >
             {view === 'files' ? '← Workspace' : 'Files'}
           </button>
+          <button
+            className={view === 'tutorials' ? 'primary' : undefined}
+            onClick={() => setView((v) => (v === 'tutorials' ? 'workspace' : 'tutorials'))}
+            data-testid="toggle-tutorials"
+            aria-pressed={view === 'tutorials'}
+          >
+            {view === 'tutorials' ? '← Workspace' : 'Guided Tutorials'}
+          </button>
         </div>
       </header>
 
@@ -281,6 +290,14 @@ export function App() {
       {view === 'scheduler' && <SchedulerComparison />}
       {view === 'paging' && <PagingVisualizer />}
       {view === 'files' && <FilesLab />}
+      {view === 'tutorials' && (
+        <GuidedTutorials
+          onLoadStep={(src) => {
+            setSource(src);
+            setView('workspace');
+          }}
+        />
+      )}
 
       <div className="layout" style={view !== 'workspace' ? { display: 'none' } : undefined}>
         <div className="column">
