@@ -1,0 +1,23 @@
+{
+  "name": "@novaos/concurrency",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic concurrency primitives (mutex, semaphore) and a race-condition demonstrator.",
+  "sideEffects": false,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --clean",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@novaos/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@novaos/testing": "workspace:*"
+  }
+}

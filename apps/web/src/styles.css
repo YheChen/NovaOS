@@ -318,3 +318,88 @@ tr.hl td {
   font-style: italic;
   padding: 8px 12px;
 }
+
+/* --- Concurrency lab --- */
+.conc-lab {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+.conc-lab .panel-body {
+  flex: 1;
+}
+.conc-controls {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin: 8px 0 12px;
+}
+.conc-controls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.conc-controls .scrubber {
+  width: 140px;
+  margin: 0;
+}
+.conc-controls .mono {
+  font-family: var(--mono);
+  color: var(--text);
+  min-width: 18px;
+}
+.race-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.race-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 12px 14px;
+}
+.race-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+.race-stats {
+  display: flex;
+  gap: 20px;
+}
+.stat .stat-value {
+  font-family: var(--mono);
+  font-size: 22px;
+  line-height: 1.1;
+}
+.race-trace {
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.race-trace th {
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+}
+.thread-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+tr.stale-write td {
+  background: rgba(248, 81, 73, 0.16);
+  color: var(--red);
+}

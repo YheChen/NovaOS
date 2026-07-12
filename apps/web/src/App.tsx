@@ -12,6 +12,7 @@ import {
 import { Inspector } from './components/Inspector';
 import { DebuggerPanel, type DebugActions } from './components/DebuggerPanel';
 import { CodeEditor } from './components/CodeEditor';
+import { ConcurrencyLab } from './components/ConcurrencyLab';
 
 const DEFAULT_SOURCE = `int main() {
   int a = 5;
@@ -63,6 +64,7 @@ function buildDebugProgram(compilation: CompilationResult): DebugProgram | null 
 }
 
 export function App() {
+  const [view, setView] = useState<'workspace' | 'concurrency'>('workspace');
   const [source, setSource] = useState<string>(loadInitialSource);
   const [compilation, setCompilation] = useState<CompilationResult | null>(null);
   const [output, setOutput] = useState('');
@@ -235,10 +237,20 @@ export function App() {
           <button onClick={share} data-testid="share">
             Share
           </button>
+          <button
+            className={view === 'concurrency' ? 'primary' : undefined}
+            onClick={() => setView((v) => (v === 'workspace' ? 'concurrency' : 'workspace'))}
+            data-testid="toggle-concurrency"
+            aria-pressed={view === 'concurrency'}
+          >
+            {view === 'concurrency' ? '← Workspace' : 'Concurrency Lab'}
+          </button>
         </div>
       </header>
 
-      <div className="layout">
+      {view === 'concurrency' && <ConcurrencyLab />}
+
+      <div className="layout" style={view === 'concurrency' ? { display: 'none' } : undefined}>
         <div className="column">
           <div className="panel" style={{ flex: 1, minHeight: 0 }}>
             <div className="panel-title">Editor: {FILE}</div>

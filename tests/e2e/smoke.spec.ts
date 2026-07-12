@@ -24,6 +24,15 @@ test('compiling surfaces the inspector stages', async ({ page }) => {
   await expect(page.locator('pre')).toContainText('CALL main');
 });
 
+test('opens the concurrency lab and shows a reproducible race', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('toggle-concurrency').click();
+  await expect(page.getByTestId('concurrency-lab')).toBeVisible();
+  // The mutex-protected run is always correct; the unlocked run shows a RACE badge.
+  await expect(page.getByTestId('race-locked')).toContainText('correct');
+  await expect(page.getByTestId('race-unlocked')).toContainText('RACE');
+});
+
 test('starts a paused debug session at entry', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('debug').click();
