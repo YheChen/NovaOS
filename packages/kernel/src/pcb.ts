@@ -24,6 +24,8 @@ export interface ProcessSchedulingMetadata {
   quantumRemaining: number;
   lastScheduledAtTick: number | null;
   arrivalSequence: number;
+  /** Total estimated CPU burst in ticks, for SJF/SRTF; undefined = no estimate. */
+  estimatedBurst?: number;
 }
 
 export interface ProcessAccounting {

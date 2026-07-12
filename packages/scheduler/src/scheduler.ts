@@ -1,6 +1,6 @@
 import type { ProcessId, SimTime, DeterministicRandom } from '@novaos/shared';
 
-export type SchedulerId = 'fifo' | 'round-robin' | 'priority' | 'lottery';
+export type SchedulerId = 'fifo' | 'round-robin' | 'priority' | 'lottery' | 'sjf' | 'srtf' | 'mlfq';
 
 /**
  * The minimal, read-only view of a process the scheduler needs. The kernel owns
@@ -12,12 +12,39 @@ export interface SchedulableProcess {
   readonly priority: number;
   /** Deterministic admission order, used to break ties. */
   readonly arrivalSequence: number;
+  /**
+   * Estimated *remaining* CPU work in ticks. Used only by SJF/SRTF; every other
+   * algorithm ignores it. Optional so existing callers stay untouched — when the
+   * kernel supplies it, SJF/SRTF rank by it; otherwise they fall back to a
+   * priority-derived proxy (see `burstOf` in sjf.ts).
+   */
+  readonly estimatedBurst?: number;
 }
+
+/** Fallback burst when a process carries no estimate (see `burstOf`). */
+export const DEFAULT_ESTIMATED_BURST = 1;
 
 export interface SchedulingContext {
   readonly currentPid: ProcessId | null;
   readonly tick: SimTime;
   readonly random: DeterministicRandom;
+}
+
+/** One priority level of an MLFQ scheduler, for the multi-queue visualizer. */
+export interface MlfqLevelView {
+  readonly level: number;
+  readonly quantum: number;
+  readonly pids: ProcessId[];
+}
+
+/** The structured MLFQ view exposed on `SchedulerSnapshot.mlfq`. */
+export interface MlfqSnapshotView {
+  readonly levels: MlfqLevelView[];
+  /** Level the currently running process was picked from; `null` if idle. */
+  readonly runningLevel: number | null;
+  readonly boostInterval: number | null;
+  /** Ticks until the next priority boost; `null` when boosting is disabled. */
+  readonly ticksUntilBoost: number | null;
 }
 
 export interface SchedulerSnapshot {
@@ -27,6 +54,8 @@ export interface SchedulerSnapshot {
   readonly quantumTicks: number | null;
   readonly readyQueue: ProcessId[];
   readonly config: Record<string, unknown>;
+  /** Present only for the MLFQ scheduler; enables the multi-queue visualizer. */
+  readonly mlfq?: MlfqSnapshotView;
 }
 
 /**

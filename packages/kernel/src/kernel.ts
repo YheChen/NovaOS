@@ -52,6 +52,8 @@ export interface CreateProcessSpec {
   readonly image?: ProcessImage | null;
   readonly parentPid?: ProcessId | null;
   readonly priority?: number;
+  /** Total estimated CPU burst in ticks (SJF/SRTF ranking hint; optional). */
+  readonly estimatedBurst?: number;
   /** Admit to the scheduler (defaults to true when an image is provided). */
   readonly admit?: boolean;
   readonly segments?: { dataBytes?: number; heapBytes?: number; stackBytes?: number };
@@ -175,10 +177,16 @@ export function createKernel(deps: KernelDeps): Kernel {
   }
 
   function schedulableOf(pcb: ProcessControlBlock): SchedulableProcess {
+    const total = pcb.scheduling.estimatedBurst;
     return {
       pid: pcb.pid,
       priority: pcb.priority,
       arrivalSequence: pcb.scheduling.arrivalSequence,
+      // SJF/SRTF want *remaining* burst: total estimate minus ticks already run.
+      // Recomputed on every enqueue/requeue, so SRTF sees the time shrink.
+      ...(total !== undefined
+        ? { estimatedBurst: Math.max(1, total - pcb.accounting.cpuTicksUsed) }
+        : {}),
     };
   }
 
@@ -283,7 +291,12 @@ export function createKernel(deps: KernelDeps): Kernel {
       priority: spec.priority ?? 0,
       registers,
       memoryMap,
-      scheduling: { quantumRemaining: 0, lastScheduledAtTick: null, arrivalSequence },
+      scheduling: {
+        quantumRemaining: 0,
+        lastScheduledAtTick: null,
+        arrivalSequence,
+        ...(spec.estimatedBurst !== undefined ? { estimatedBurst: spec.estimatedBurst } : {}),
+      },
       accounting: {
         cpuTicksUsed: 0,
         instructionsExecuted: 0,
