@@ -2,6 +2,17 @@
 
 > A browser-based, deterministic operating-systems laboratory. **v1.0**
 
+### ▶ [Try it live](https://yhechen.github.io/NovaOS/) — no install required
+
+Edit Toy C, compile it through a real toolchain, run it on a custom virtual
+machine, and **step execution backwards** through a deterministic timeline —
+all in the browser. See [`docs/demo.md`](docs/demo.md) for a 30-second
+walkthrough.
+
+<!-- To add a screencast, drop it at docs/media/demo.gif and uncomment:
+![NovaOS demo](docs/media/demo.gif)
+-->
+
 NovaOS makes the invisible parts of an operating system **visible**. Write a small
 program, compile it through a real toolchain, run it inside a simulated machine,
 and watch CPU registers mutate, memory change, processes get scheduled, syscalls
