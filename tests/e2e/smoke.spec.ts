@@ -80,6 +80,24 @@ test('@smoke filesystem persists across reloads (IndexedDB)', async ({ page }) =
   await expect(page.getByTestId('files-listing')).toContainText('persisted.txt');
 });
 
+test('@smoke guided tutorials: check a step and advance progress', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('toggle-tutorials').click();
+  await expect(page.getByTestId('tutorials-view')).toBeVisible();
+  // The default tutorial's first step is "hello" — expected output 15.
+  await page.getByTestId('tutorial-check').click();
+  await expect(page.getByTestId('checkpoint-hello-out')).toContainText('15');
+  await expect(page.getByTestId('tutorial-progress')).toContainText('1 /');
+});
+
+test('@a11y tutorials toggle is keyboard-reachable', async ({ page }) => {
+  await page.goto('/');
+  const toggle = page.getByTestId('toggle-tutorials');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+});
+
 test('starts a paused debug session at entry', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('debug').click();

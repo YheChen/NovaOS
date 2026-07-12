@@ -110,6 +110,9 @@ importers:
       '@novaos/simulator':
         specifier: workspace:*
         version: link:../../packages/simulator
+      '@novaos/tutorials':
+        specifier: workspace:*
+        version: link:../../packages/tutorials
       monaco-editor:
         specifier: ^0.52.2
         version: 0.52.2
@@ -362,6 +365,16 @@ importers:
       '@novaos/shared':
         specifier: workspace:*
         version: link:../shared
+
+  packages/tutorials:
+    dependencies:
+      '@novaos/examples':
+        specifier: workspace:*
+        version: link:../examples
+    devDependencies:
+      '@novaos/simulator':
+        specifier: workspace:*
+        version: link:../simulator
 
   packages/ui: {}
 

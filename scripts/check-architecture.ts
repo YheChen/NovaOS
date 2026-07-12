@@ -50,6 +50,7 @@ const DOMAIN_PACKAGES = new Set([
   'assembler',
   'compiler',
   'debugger',
+  'tutorials',
 ]);
 
 const DETERMINISTIC_PACKAGES = new Set([
@@ -67,6 +68,7 @@ const DETERMINISTIC_PACKAGES = new Set([
   'assembler',
   'compiler',
   'debugger',
+  'tutorials',
 ]);
 
 const FORBIDDEN_UI_IMPORTS = [
