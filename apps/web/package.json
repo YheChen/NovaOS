@@ -17,6 +17,7 @@
     "@novaos/cpu": "workspace:*",
     "@novaos/debugger": "workspace:*",
     "@novaos/examples": "workspace:*",
+    "@novaos/mmu": "workspace:*",
     "@novaos/scheduler": "workspace:*",
     "@novaos/shared": "workspace:*",
     "@novaos/simulator": "workspace:*",

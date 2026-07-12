@@ -14,6 +14,7 @@ import { DebuggerPanel, type DebugActions } from './components/DebuggerPanel';
 import { CodeEditor } from './components/CodeEditor';
 import { ConcurrencyLab } from './components/ConcurrencyLab';
 import { SchedulerComparison } from './components/SchedulerComparison';
+import { PagingVisualizer } from './components/PagingVisualizer';
 
 const DEFAULT_SOURCE = `int main() {
   int a = 5;
@@ -65,7 +66,9 @@ function buildDebugProgram(compilation: CompilationResult): DebugProgram | null 
 }
 
 export function App() {
-  const [view, setView] = useState<'workspace' | 'concurrency' | 'scheduler'>('workspace');
+  const [view, setView] = useState<'workspace' | 'concurrency' | 'scheduler' | 'paging'>(
+    'workspace',
+  );
   const [source, setSource] = useState<string>(loadInitialSource);
   const [compilation, setCompilation] = useState<CompilationResult | null>(null);
   const [output, setOutput] = useState('');
@@ -254,11 +257,20 @@ export function App() {
           >
             {view === 'scheduler' ? '← Workspace' : 'Scheduler Lab'}
           </button>
+          <button
+            className={view === 'paging' ? 'primary' : undefined}
+            onClick={() => setView((v) => (v === 'paging' ? 'workspace' : 'paging'))}
+            data-testid="toggle-paging"
+            aria-pressed={view === 'paging'}
+          >
+            {view === 'paging' ? '← Workspace' : 'Paging'}
+          </button>
         </div>
       </header>
 
       {view === 'concurrency' && <ConcurrencyLab />}
       {view === 'scheduler' && <SchedulerComparison />}
+      {view === 'paging' && <PagingVisualizer />}
 
       <div className="layout" style={view !== 'workspace' ? { display: 'none' } : undefined}>
         <div className="column">

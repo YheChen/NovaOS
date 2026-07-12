@@ -48,6 +48,25 @@ test('scheduler lab compares algorithms with a Gantt chart', async ({ page }) =>
   await expect(page.getByTestId('editor')).toBeVisible();
 });
 
+test('paging lab translates a virtual address through the MMU', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('toggle-paging').click();
+  await expect(page.getByTestId('paging-lab')).toBeVisible();
+  await expect(page.getByTestId('mmu-page-table')).toBeVisible();
+  await page.getByTestId('mmu-translate').click();
+  // The walkthrough shows the decode → … → compose steps and a VA→PA status.
+  await expect(page.getByTestId('mmu-walkthrough')).toContainText('compose');
+  await expect(page.getByTestId('mmu-status')).toContainText('PA');
+});
+
+test('@a11y paging view toggle is keyboard-reachable', async ({ page }) => {
+  await page.goto('/');
+  const toggle = page.getByTestId('toggle-paging');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+});
+
 test('starts a paused debug session at entry', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('debug').click();
