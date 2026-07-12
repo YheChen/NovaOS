@@ -5,5 +5,6 @@ export * from './priority';
 export * from './lottery';
 export * from './sjf';
 export * from './srtf';
+export * from './mlfq';
 
 export const SCHEDULER_VERSION = '0.0.0';
