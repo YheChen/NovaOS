@@ -117,8 +117,8 @@ export function parse(source: string, fileId?: FileId): ParseResult {
     if (check('operator', '=') || isCompound) {
       const op = advance();
       const value = parseAssignment();
-      if (left.kind !== 'Identifier') {
-        throw error(op, 'Invalid assignment target.', 'The left side of `=` must be a variable.');
+      if (left.kind !== 'Identifier' && left.kind !== 'IndexExpression') {
+        throw error(op, 'Invalid assignment target.', 'Assign to a variable or array element.');
       }
       if (op.lexeme === '=') {
         return {
@@ -128,6 +128,9 @@ export function parse(source: string, fileId?: FileId): ParseResult {
           value,
           span: spanBetween(left.span, value.span),
         };
+      }
+      if (left.kind !== 'Identifier') {
+        throw error(op, 'Compound assignment requires a simple variable target.');
       }
       // Desugar `x += e` into `x = x + e`.
       const baseOp = COMPOUND[op.lexeme] as BinaryOperator;
@@ -201,25 +204,43 @@ export function parse(source: string, fileId?: FileId): ParseResult {
 
   const parseCall = (): ExpressionNode => {
     let expr = parsePrimary();
-    while (check('punctuation', '(')) {
-      if (expr.kind !== 'Identifier') {
-        throw error(peek(), 'Only named functions can be called.');
+    for (;;) {
+      if (check('punctuation', '(')) {
+        if (expr.kind !== 'Identifier') {
+          throw error(peek(), 'Only named functions can be called.');
+        }
+        advance(); // (
+        const args: ExpressionNode[] = [];
+        if (!check('punctuation', ')')) {
+          do {
+            args.push(parseExpression());
+          } while (match('punctuation', ','));
+        }
+        const close = expect('punctuation', ')', '`)` after arguments');
+        expr = {
+          kind: 'CallExpression',
+          id: id(),
+          callee: expr,
+          args,
+          span: spanBetween(expr.span, close.span),
+        };
+      } else if (check('punctuation', '[')) {
+        if (expr.kind !== 'Identifier') {
+          throw error(peek(), 'Only array variables can be indexed.');
+        }
+        advance(); // [
+        const index = parseExpression();
+        const close = expect('punctuation', ']', '`]` after the index');
+        expr = {
+          kind: 'IndexExpression',
+          id: id(),
+          array: expr,
+          index,
+          span: spanBetween(expr.span, close.span),
+        };
+      } else {
+        break;
       }
-      advance(); // (
-      const args: ExpressionNode[] = [];
-      if (!check('punctuation', ')')) {
-        do {
-          args.push(parseExpression());
-        } while (match('punctuation', ','));
-      }
-      const close = expect('punctuation', ')', '`)` after arguments');
-      expr = {
-        kind: 'CallExpression',
-        id: id(),
-        callee: expr,
-        args,
-        span: spanBetween(expr.span, close.span),
-      };
     }
     return expr;
   };
@@ -269,6 +290,24 @@ export function parse(source: string, fileId?: FileId): ParseResult {
   const parseVarDecl = (): VariableDeclarationNode => {
     const type = parseType();
     const name = parseIdentifier();
+    // Array declaration: `int a[N];` (fixed size; no initializer in v1).
+    if (match('punctuation', '[')) {
+      const sizeTok = peek();
+      if (sizeTok.kind !== 'integer') {
+        throw error(sizeTok, 'Array size must be an integer literal.');
+      }
+      advance();
+      expect('punctuation', ']', '`]` after the array size');
+      const semi = expect('punctuation', ';', '`;` after the declaration');
+      return {
+        kind: 'VariableDeclaration',
+        id: id(),
+        name,
+        type,
+        arraySize: sizeTok.value ?? 0,
+        span: spanBetween(type.span, semi.span),
+      };
+    }
     let initializer: ExpressionNode | undefined;
     if (match('operator', '=')) initializer = parseExpression();
     const semi = expect('punctuation', ';', '`;` after the declaration');

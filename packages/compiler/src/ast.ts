@@ -72,10 +72,18 @@ export interface UnaryExpressionNode {
   readonly span: SourceSpan;
 }
 
+export interface IndexExpressionNode {
+  readonly kind: 'IndexExpression';
+  readonly id: AstNodeId;
+  readonly array: IdentifierNode;
+  readonly index: ExpressionNode;
+  readonly span: SourceSpan;
+}
+
 export interface AssignmentExpressionNode {
   readonly kind: 'AssignmentExpression';
   readonly id: AstNodeId;
-  readonly target: IdentifierNode;
+  readonly target: IdentifierNode | IndexExpressionNode;
   readonly value: ExpressionNode;
   readonly span: SourceSpan;
 }
@@ -93,6 +101,7 @@ export type ExpressionNode =
   | UnaryExpressionNode
   | AssignmentExpressionNode
   | CallExpressionNode
+  | IndexExpressionNode
   | IdentifierNode
   | IntegerLiteralNode
   | BooleanLiteralNode;
@@ -103,6 +112,8 @@ export interface VariableDeclarationNode {
   readonly name: IdentifierNode;
   readonly type: TypeNode;
   readonly initializer?: ExpressionNode;
+  /** Present for array declarations `int a[N];`; the fixed element count. */
+  readonly arraySize?: number;
   readonly span: SourceSpan;
 }
 

@@ -166,6 +166,10 @@ function applySubstitution(fn: IRFunction, subst: Map<IRValueId, IRValueId>): vo
           return { ...ins, args: ins.args.map(r) };
         case 'print':
           return { ...ins, value: r(ins.value) };
+        case 'loadElem':
+          return { ...ins, index: r(ins.index) };
+        case 'storeElem':
+          return { ...ins, index: r(ins.index), value: r(ins.value) };
         default:
           return ins;
       }
@@ -191,7 +195,8 @@ function deadCodeEliminate(fn: IRFunction): number {
           ins.kind === 'const' ||
           ins.kind === 'load' ||
           ins.kind === 'binary' ||
-          ins.kind === 'unary';
+          ins.kind === 'unary' ||
+          ins.kind === 'loadElem';
         if (pure && !used.has(ins.target)) {
           changes += 1;
           changed = true;
@@ -225,6 +230,13 @@ function collectUsed(fn: IRFunction): Set<IRValueId> {
           ins.args.forEach(use);
           break;
         case 'print':
+          use(ins.value);
+          break;
+        case 'loadElem':
+          use(ins.index);
+          break;
+        case 'storeElem':
+          use(ins.index);
           use(ins.value);
           break;
       }

@@ -178,6 +178,42 @@ int main() {
     expect(run('shr.c', 'int main() { print(64 >> 2); return 0; }')).toBe('16');
   });
 
+  it('supports fixed-size arrays with indexed read/write', () => {
+    expect(
+      run(
+        'array.c',
+        `int main() {
+  int a[3];
+  a[0] = 5;
+  a[1] = 10;
+  a[2] = a[0] + a[1];
+  print(a[2]);
+  return 0;
+}`,
+      ),
+    ).toBe('15');
+  });
+
+  it('indexes an array with a computed index in a loop', () => {
+    expect(
+      run(
+        'array-loop.c',
+        `int main() {
+  int a[3];
+  int s = 0;
+  int i = 0;
+  while (i < 3) {
+    a[i] = i + 1;
+    s = s + a[i];
+    i = i + 1;
+  }
+  print(s);
+  return 0;
+}`,
+      ),
+    ).toBe('6');
+  });
+
   it('supports dynamic memory: malloc / poke / peek / free', () => {
     expect(
       run(
