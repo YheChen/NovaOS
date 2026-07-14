@@ -21,6 +21,7 @@
     "@novaos/events": "workspace:*",
     "@novaos/kernel": "workspace:*",
     "@novaos/memory": "workspace:*",
+    "@novaos/mmu": "workspace:*",
     "@novaos/scheduler": "workspace:*",
     "@novaos/shared": "workspace:*"
   },
