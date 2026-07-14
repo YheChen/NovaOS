@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "NovaOS — a browser-based interactive operating systems laboratory.",
+  "description": "NovaOS - a browser-based interactive operating systems laboratory.",
+  "license": "MIT",
   "packageManager": "pnpm@10.31.0",
   "engines": {
     "node": ">=20.0.0"
