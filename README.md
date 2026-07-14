@@ -233,4 +233,4 @@ violation will fail the build before review).
 
 ## License
 
-Released under the MIT License.
+Released under the [MIT License](LICENSE).
