@@ -309,6 +309,9 @@ importers:
       '@novaos/memory':
         specifier: workspace:*
         version: link:../memory
+      '@novaos/mmu':
+        specifier: workspace:*
+        version: link:../mmu
       '@novaos/scheduler':
         specifier: workspace:*
         version: link:../scheduler

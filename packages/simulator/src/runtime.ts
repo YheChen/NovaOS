@@ -33,12 +33,23 @@ import type {
   KernelSnapshot,
   RegisterPort,
 } from '@novaos/kernel';
+import {
+  createIdentityPaging,
+  createTranslatingMemory,
+  type AddressTranslator,
+  type TranslationStats,
+} from './paging';
 import { createBufferedOutput } from './output';
 import type { ProgramImage } from './program';
 import * as runtimeEvents from './events';
 
 export type SchedulerChoice =
   'fifo' | 'round-robin' | 'priority' | 'lottery' | 'sjf' | 'srtf' | 'mlfq';
+
+export interface PagingRuntimeOptions {
+  readonly pageSizeBytes?: number;
+  readonly tlbCapacity?: number;
+}
 
 export interface NovaRuntimeOptions {
   readonly ramBytes?: number;
@@ -48,6 +59,12 @@ export interface NovaRuntimeOptions {
   readonly maxSteps?: number;
   /** Per-process stack size. Defaults to 4 KB — enough for deep Toy C recursion. */
   readonly stackBytes?: number;
+  /**
+   * Route every CPU fetch/load/store through an (identity-mapped) MMU so
+   * accesses walk a page table + TLB. Transparent to results; exposes
+   * translation stats via `getTranslationStats()`. Off by default.
+   */
+  readonly paging?: boolean | PagingRuntimeOptions;
 }
 
 const DEFAULT_STACK_BYTES = 4096;
@@ -80,6 +97,8 @@ export interface NovaRuntime {
   getSchedulerSnapshot(): SchedulerSnapshot;
   getMemoryMap(): MemoryMapSnapshot;
   getSnapshot(): { kernel: KernelSnapshot; clock: number };
+  /** MMU translation stats when paging is enabled; `null` otherwise. */
+  getTranslationStats(): TranslationStats | null;
 }
 
 const DEFAULT_MAX_STEPS = 1_000_000;
@@ -140,8 +159,20 @@ export function createNovaRuntime(options: NovaRuntimeOptions = {}): NovaRuntime
     config: { defaultStackBytes: options.stackBytes ?? DEFAULT_STACK_BYTES },
   });
 
+  // Optionally route the CPU's memory accesses through an identity-mapped MMU.
+  // The kernel keeps the real (physical) memory for setup; only the CPU's view
+  // is translated, so behavior is unchanged while accesses walk a page table.
+  const pagingOpt = options.paging;
+  const translator: AddressTranslator | null = pagingOpt
+    ? createIdentityPaging({
+        ramBytes,
+        ...(typeof pagingOpt === 'object' ? pagingOpt : {}),
+      })
+    : null;
+  const cpuMemory = translator ? createTranslatingMemory(memory, translator) : memory;
+
   const syscallTrap: SyscallTrap = { invoke: (request) => kernel.handleSyscall(request) };
-  const ctx: VmExecutionContext = { memory, bus, clock, output, syscallTrap };
+  const ctx: VmExecutionContext = { memory: cpuMemory, bus, clock, output, syscallTrap };
 
   function step(): CpuStepResult | null {
     if (!kernel.hasRunnable()) return null;
@@ -219,5 +250,6 @@ export function createNovaRuntime(options: NovaRuntimeOptions = {}): NovaRuntime
     getSchedulerSnapshot: () => kernel.getSchedulerSnapshot(),
     getMemoryMap: () => kernel.getMemoryMap(),
     getSnapshot: () => ({ kernel: kernel.getSnapshot(), clock: clock.now() }),
+    getTranslationStats: () => translator?.stats() ?? null,
   };
 }
