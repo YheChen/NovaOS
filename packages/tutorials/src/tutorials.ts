@@ -1,6 +1,12 @@
 import { exampleById } from '@novaos/examples';
-import type { Tutorial, TutorialStep, TutorialFeature, Checkpoint } from './types';
-import { expectedOutput, hasDiagnostic } from './checkpoints';
+import type {
+  Tutorial,
+  TutorialStep,
+  TutorialFeature,
+  Checkpoint,
+  MmuCheckpointConfig,
+} from './types';
+import { expectedOutput, hasDiagnostic, mmuTranslate } from './checkpoints';
 
 interface StepOpts {
   readonly title: string;
@@ -42,6 +48,27 @@ function inlineStep(id: string, fileName: string, source: string, opts: StepOpts
     ...(opts.hints ? { hints: opts.hints } : {}),
   };
 }
+
+/** A step with no editor program (e.g. a virtual-memory walkthrough). */
+function conceptStep(id: string, opts: StepOpts): TutorialStep {
+  return {
+    id,
+    title: opts.title,
+    explanation: opts.explanation,
+    feature: opts.feature,
+    checkpoints: opts.checkpoints,
+    ...(opts.hints ? { hints: opts.hints } : {}),
+  };
+}
+
+// A small paging geometry: 16-byte pages, 16 virtual pages, 4 physical frames.
+const VM_CONFIG: MmuCheckpointConfig = {
+  pageSizeBytes: 16,
+  virtualAddressBits: 8,
+  physicalAddressBits: 6,
+  replacementId: 'fifo',
+  seed: 1,
+};
 
 const HEAP_SOURCE = `int main() {
   int p = malloc(8);
@@ -168,6 +195,54 @@ export const TUTORIALS: readonly Tutorial[] = [
         explanation: 'AND binds tighter than OR, so 1 | 2 & 2 is 1 | (2 & 2) = 1 | 2 = 3.',
         feature: 'compiler',
         checkpoints: [expectedOutput('bitwise-out', 'Prints 3', '3')],
+      }),
+    ],
+  },
+  {
+    id: 'virtual-memory',
+    title: 'Virtual memory and paging',
+    summary: 'Translate virtual addresses, demand-page on a miss, and evict under pressure.',
+    estimatedMinutes: 7,
+    steps: [
+      conceptStep('vm-translate', {
+        title: 'Decode and translate an address',
+        explanation:
+          'With 16-byte pages, virtual address 0x1A splits into VPN 1 (0x1A >> 4) and offset 10 (0x1A & 0xF). VPN 1 is not resident, so the first access demand-pages it into frame 0, giving physical address 0*16 + 10 = 10. A second access hits the same mapping. Open the Paging lab to watch the walk step by step.',
+        feature: 'memory',
+        checkpoints: [
+          mmuTranslate('vm-translate-cp', 'VA 0x1A → PA 10, stable across accesses', VM_CONFIG, [
+            { address: 0x1a, kind: 'read', expectPhysical: 10 },
+            { address: 0x1a, kind: 'read', expectPhysical: 10 },
+          ]),
+        ],
+        hints: ['offset bits = log2(pageSize) = 4, so the low 4 bits are the offset.'],
+      }),
+      conceptStep('vm-evict', {
+        title: 'Fill the frames and evict (FIFO)',
+        explanation:
+          'There are only 4 physical frames. Touching VPNs 0..3 fills them (frames 0..3). Touching VPN 4 finds memory full, so FIFO evicts the oldest page (VPN 0, frame 0) and reuses frame 0. Re-touching VPN 0 now faults again and evicts the next-oldest (VPN 1, frame 1).',
+        feature: 'memory',
+        checkpoints: [
+          mmuTranslate('vm-evict-cp', 'FIFO reuses the oldest frame under pressure', VM_CONFIG, [
+            { address: 0, kind: 'read', expectPhysical: 0 },
+            { address: 16, kind: 'read', expectPhysical: 16 },
+            { address: 32, kind: 'read', expectPhysical: 32 },
+            { address: 48, kind: 'read', expectPhysical: 48 },
+            { address: 64, kind: 'read', expectPhysical: 0 }, // VPN 4 evicts VPN 0 → frame 0
+            { address: 0, kind: 'read', expectPhysical: 16 }, // VPN 0 re-faults → frame 1
+          ]),
+        ],
+      }),
+      conceptStep('vm-range', {
+        title: 'Addresses out of range fault',
+        explanation:
+          'The virtual address space is 8 bits wide (256 bytes). A virtual address of 300 lies outside it, so translation fails with an out-of-range fault rather than reading garbage.',
+        feature: 'memory',
+        checkpoints: [
+          mmuTranslate('vm-range-cp', 'VA 300 is rejected as out of range', VM_CONFIG, [
+            { address: 300, kind: 'read', expectFault: true },
+          ]),
+        ],
       }),
     ],
   },

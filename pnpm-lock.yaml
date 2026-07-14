@@ -371,6 +371,12 @@ importers:
       '@novaos/examples':
         specifier: workspace:*
         version: link:../examples
+      '@novaos/mmu':
+        specifier: workspace:*
+        version: link:../mmu
+      '@novaos/shared':
+        specifier: workspace:*
+        version: link:../shared
     devDependencies:
       '@novaos/simulator':
         specifier: workspace:*

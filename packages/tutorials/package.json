@@ -15,7 +15,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@novaos/examples": "workspace:*"
+    "@novaos/examples": "workspace:*",
+    "@novaos/mmu": "workspace:*",
+    "@novaos/shared": "workspace:*"
   },
   "devDependencies": {
     "@novaos/simulator": "workspace:*"
