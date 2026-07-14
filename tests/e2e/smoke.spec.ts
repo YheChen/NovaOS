@@ -90,6 +90,14 @@ test('@smoke guided tutorials: check a step and advance progress', async ({ page
   await expect(page.getByTestId('tutorial-progress')).toContainText('1 /');
 });
 
+test('@smoke virtual-memory tutorial verifies an address translation', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('toggle-tutorials').click();
+  await page.getByTestId('tutorial-picker').selectOption('virtual-memory');
+  await page.getByTestId('tutorial-check').click();
+  await expect(page.getByTestId('checkpoint-vm-translate-cp')).toContainText('pass');
+});
+
 test('@a11y tutorials toggle is keyboard-reachable', async ({ page }) => {
   await page.goto('/');
   const toggle = page.getByTestId('toggle-tutorials');

@@ -29,7 +29,36 @@ export type Checkpoint =
       readonly id: string;
       readonly description: string;
       readonly severity: 'error' | 'warning' | 'info';
+    }
+  /**
+   * A virtual-memory checkpoint: build an MMU from `config`, replay `accesses`,
+   * and assert each translated physical address (or an expected fault). Fully
+   * self-contained data — verified deterministically via `@novaos/mmu`.
+   */
+  | {
+      readonly kind: 'mmu-translate';
+      readonly id: string;
+      readonly description: string;
+      readonly config: MmuCheckpointConfig;
+      readonly accesses: readonly MmuAccess[];
     };
+
+export interface MmuCheckpointConfig {
+  readonly pageSizeBytes: number;
+  readonly virtualAddressBits: number;
+  readonly physicalAddressBits: number;
+  readonly replacementId: 'fifo' | 'clock';
+  readonly seed: number;
+}
+
+export interface MmuAccess {
+  readonly address: number;
+  readonly kind: 'read' | 'write' | 'execute';
+  /** Expected physical address after translation (when the access succeeds). */
+  readonly expectPhysical?: number;
+  /** When true, the translation is expected to fail (e.g. out of range). */
+  readonly expectFault?: boolean;
+}
 
 export type CheckpointKind = Checkpoint['kind'];
 
@@ -47,8 +76,8 @@ export interface TutorialStep {
   readonly title: string;
   /** Plain-text explanation (rendered as text, never executed). */
   readonly explanation: string;
-  /** Loaded into the editor when the step is opened. */
-  readonly starterProgram: StarterProgram;
+  /** Loaded into the editor when the step is opened; omitted for non-program steps. */
+  readonly starterProgram?: StarterProgram;
   readonly feature: TutorialFeature;
   /** Checkpoints verified before the step is "done"; empty = informational. */
   readonly checkpoints: readonly Checkpoint[];

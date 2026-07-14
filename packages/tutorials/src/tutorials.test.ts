@@ -1,7 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { createProgramRunner } from '@novaos/simulator';
 import { exampleById } from '@novaos/examples';
-import { TUTORIALS, tutorialById, stepById, verifyCheckpoint, expectedOutput } from './index';
+import {
+  TUTORIALS,
+  tutorialById,
+  stepById,
+  verifyCheckpoint,
+  expectedOutput,
+  mmuTranslate,
+} from './index';
 
 const runner = createProgramRunner();
 
@@ -25,25 +32,25 @@ describe('tutorial dataset — structural integrity', () => {
   it('references only known examples, with matching source', () => {
     for (const t of TUTORIALS) {
       for (const s of t.steps) {
-        const exampleId = s.starterProgram.exampleId;
-        if (exampleId === undefined) continue;
-        const ex = exampleById(exampleId);
-        expect(ex, `example ${exampleId}`).toBeDefined();
-        expect(s.starterProgram.source).toBe(ex?.source);
+        const program = s.starterProgram;
+        if (!program || program.exampleId === undefined) continue;
+        const ex = exampleById(program.exampleId);
+        expect(ex, `example ${program.exampleId}`).toBeDefined();
+        expect(program.source).toBe(ex?.source);
       }
     }
   });
 });
 
 describe('tutorial dataset — semantic integrity (the oracle)', () => {
-  it('every checkpoint passes against the real runner', () => {
+  it('every checkpoint passes against the real runner / MMU', () => {
     for (const t of TUTORIALS) {
       for (const s of t.steps) {
         for (const cp of s.checkpoints) {
           const result = verifyCheckpoint(cp, {
             runner,
-            fileName: s.starterProgram.fileName,
-            source: s.starterProgram.source,
+            fileName: s.starterProgram?.fileName,
+            source: s.starterProgram?.source,
           });
           expect(result.passed, `${t.id}/${s.id}/${cp.id}: ${result.detail}`).toBe(true);
         }
@@ -74,5 +81,25 @@ describe('lookups + verifier correctness', () => {
     });
     expect(result.passed).toBe(false);
     expect(result.detail).toContain('expected');
+  });
+
+  it('verifies mmu-translate checkpoints (pass and fail)', () => {
+    const cfg = {
+      pageSizeBytes: 16,
+      virtualAddressBits: 8,
+      physicalAddressBits: 6,
+      replacementId: 'fifo' as const,
+      seed: 1,
+    };
+    const good = verifyCheckpoint(
+      mmuTranslate('g', 'ok', cfg, [{ address: 0x1a, kind: 'read', expectPhysical: 10 }]),
+      { runner },
+    );
+    expect(good.passed).toBe(true);
+    const bad = verifyCheckpoint(
+      mmuTranslate('b', 'wrong', cfg, [{ address: 0x1a, kind: 'read', expectPhysical: 999 }]),
+      { runner },
+    );
+    expect(bad.passed).toBe(false);
   });
 });

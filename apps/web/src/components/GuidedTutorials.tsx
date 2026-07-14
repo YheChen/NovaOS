@@ -45,8 +45,8 @@ export function GuidedTutorials({ onLoadStep }: GuidedTutorialsProps) {
     for (const cp of step.checkpoints) {
       next[cp.id] = verifyCheckpoint(cp, {
         runner: runnerRef.current,
-        fileName: step.starterProgram.fileName,
-        source: step.starterProgram.source,
+        fileName: step.starterProgram?.fileName,
+        source: step.starterProgram?.source,
       });
     }
     setResults(next);
@@ -104,13 +104,18 @@ export function GuidedTutorials({ onLoadStep }: GuidedTutorialsProps) {
           <p>{step.explanation}</p>
 
           <div className="tutorial-actions">
-            <button
-              className="primary"
-              data-testid="tutorial-load-step"
-              onClick={() => onLoadStep(step.starterProgram.source, step.starterProgram.language)}
-            >
-              Load into editor
-            </button>
+            {step.starterProgram && (
+              <button
+                className="primary"
+                data-testid="tutorial-load-step"
+                onClick={() =>
+                  step.starterProgram &&
+                  onLoadStep(step.starterProgram.source, step.starterProgram.language)
+                }
+              >
+                Load into editor
+              </button>
+            )}
             <button
               data-testid="tutorial-prev"
               disabled={stepIndex === 0}
@@ -130,7 +135,9 @@ export function GuidedTutorials({ onLoadStep }: GuidedTutorialsProps) {
             </button>
           </div>
 
-          <pre className="tutorial-source">{step.starterProgram.source}</pre>
+          {step.starterProgram && (
+            <pre className="tutorial-source">{step.starterProgram.source}</pre>
+          )}
 
           <h4 className="muted">Checkpoints</h4>
           {step.checkpoints.length === 0 ? (
