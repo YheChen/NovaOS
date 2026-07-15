@@ -235,6 +235,10 @@ int main() {
     expect(run('prec.c', 'int main() { print(1 | 2 & 2); return 0; }')).toBe('3');
   });
 
+  it('supports the sleep() and yield() scheduling builtins', () => {
+    expect(run('sched.c', 'int main() { sleep(3); yield(); print(9); return 0; }')).toBe('9');
+  });
+
   it('returns a compile error (not a crash) for invalid Toy C', () => {
     const report = runner.run('bad.c', 'int main() { return y; }');
     expect(report.ok).toBe(false);
