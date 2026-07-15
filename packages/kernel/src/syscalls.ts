@@ -6,6 +6,8 @@ export const Syscall = {
   MALLOC: 1,
   FREE: 2,
   EXIT: 4,
+  SLEEP: 5,
+  YIELD: 6,
 } as const;
 
 export const SYSCALL_NAMES: Record<number, string> = {
@@ -13,6 +15,8 @@ export const SYSCALL_NAMES: Record<number, string> = {
   [Syscall.MALLOC]: 'malloc',
   [Syscall.FREE]: 'free',
   [Syscall.EXIT]: 'exit',
+  [Syscall.SLEEP]: 'sleep',
+  [Syscall.YIELD]: 'yield',
 };
 
 export function syscallName(id: number): string {
@@ -22,7 +26,11 @@ export function syscallName(id: number): string {
 /** What a syscall handler returns to the kernel dispatcher. */
 export type SyscallOutcome =
   | { readonly kind: 'return'; readonly value: number }
-  | { readonly kind: 'exit'; readonly code: number };
+  | { readonly kind: 'exit'; readonly code: number }
+  /** Block the caller until `wakeAtTick`; it resumes with `returnValue` in R0. */
+  | { readonly kind: 'sleep'; readonly wakeAtTick: number; readonly returnValue: number }
+  /** Voluntarily give up the CPU; the caller returns to the ready queue. */
+  | { readonly kind: 'yield' };
 
 export interface SyscallHandlerContext {
   readonly pid: ProcessId;
@@ -64,9 +72,21 @@ const free: SyscallHandler = (context) => ({
 // SYSCALL 4 — terminate the current process with the exit code in R0.
 const exit: SyscallHandler = (context) => ({ kind: 'exit', code: context.registers.r0 });
 
+// SYSCALL 5 — sleep(R0 = ticks); the process blocks until `tick + ticks`, then
+// resumes with 0 in R0. Models a timed I/O wait.
+const sleep: SyscallHandler = (context) => {
+  const ticks = Math.max(0, context.registers.r0 | 0);
+  return { kind: 'sleep', wakeAtTick: (context.tick as number) + ticks, returnValue: 0 };
+};
+
+// SYSCALL 6 — yield(); the process gives up the CPU and returns to the ready queue.
+const yieldCpu: SyscallHandler = () => ({ kind: 'yield' });
+
 export const SYSCALL_HANDLERS: Record<number, SyscallHandler> = {
   [Syscall.PRINT]: print,
   [Syscall.MALLOC]: malloc,
   [Syscall.FREE]: free,
   [Syscall.EXIT]: exit,
+  [Syscall.SLEEP]: sleep,
+  [Syscall.YIELD]: yieldCpu,
 };

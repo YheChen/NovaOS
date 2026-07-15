@@ -9,7 +9,7 @@ import type { DecodedInstruction } from './instruction';
 import type { SyscallTrapResult, VmExecutionContext } from './context';
 import * as events from './events';
 
-export type CpuStepStatus = 'ok' | 'halted' | 'fault';
+export type CpuStepStatus = 'ok' | 'halted' | 'fault' | 'blocked';
 
 export interface CpuStepResult {
   readonly status: CpuStepStatus;
@@ -174,7 +174,7 @@ export function createCpu(): Cpu {
       return raise(ctx, vmFault('invalid-operand', pc, outcome.message), instruction);
     }
 
-    if (outcome.kind === 'return') {
+    if (outcome.kind === 'return' || outcome.kind === 'block') {
       const previous = registers.get('r0');
       const next = outcome.returnValue >>> 0;
       if (previous !== next) {
@@ -184,7 +184,20 @@ export function createCpu(): Cpu {
       ctx.bus.publish(events.executedEvent(ctx.clock.now(), pc, instruction));
       registers.set('pc', pc + INSTRUCTION_SIZE);
       return {
-        status: 'ok',
+        // A `block` outcome descheduled the process; the runtime commits it.
+        status: outcome.kind === 'block' ? 'blocked' : 'ok',
+        cycles: 1,
+        instruction,
+        fault: null,
+        syscall: { id: instruction.a, outcome },
+      };
+    }
+
+    if (outcome.kind === 'yield') {
+      ctx.bus.publish(events.executedEvent(ctx.clock.now(), pc, instruction));
+      registers.set('pc', pc + INSTRUCTION_SIZE);
+      return {
+        status: 'blocked',
         cycles: 1,
         instruction,
         fault: null,

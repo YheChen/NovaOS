@@ -175,7 +175,20 @@ export function createNovaRuntime(options: NovaRuntimeOptions = {}): NovaRuntime
   const ctx: VmExecutionContext = { memory: cpuMemory, bus, clock, output, syscallTrap };
 
   function step(): CpuStepResult | null {
-    if (!kernel.hasRunnable()) return null;
+    // Wake anything whose sleep timer has elapsed before choosing what to run.
+    kernel.wakeSleepers(Number(clock.now()));
+
+    // If nothing is ready but processes are sleeping, idle-advance the clock to
+    // the earliest wake time (the CPU has no work until then).
+    if (kernel.getCurrentPid() === null && !kernel.hasRunnable()) {
+      const next = kernel.nextWakeTick();
+      if (next === null) return null;
+      const now = Number(clock.now());
+      if (next > now) clock.tick(next - now);
+      kernel.wakeSleepers(Number(clock.now()));
+      if (!kernel.hasRunnable()) return null;
+    }
+
     if (kernel.getCurrentPid() === null) {
       const dispatched = kernel.dispatch();
       if (dispatched === null) return null;
@@ -195,6 +208,9 @@ export function createNovaRuntime(options: NovaRuntimeOptions = {}): NovaRuntime
         message: result.fault?.message ?? 'CPU fault',
         tick: clock.now(),
       });
+    } else if (result.status === 'blocked') {
+      // A blocking syscall (sleep) or yield descheduled the process.
+      kernel.commitDeschedule();
     } else if (kernel.shouldPreempt()) {
       kernel.handleTimerInterrupt();
     }
@@ -225,7 +241,8 @@ export function createNovaRuntime(options: NovaRuntimeOptions = {}): NovaRuntime
 
     run() {
       let steps = 0;
-      while (steps < maxSteps && kernel.hasRunnable()) {
+      // Keep running while anything is runnable OR sleeping (a sleeper will wake).
+      while (steps < maxSteps && (kernel.hasRunnable() || kernel.hasSleepers())) {
         const result = step();
         if (result === null) break;
         steps += 1;

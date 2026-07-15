@@ -87,6 +87,13 @@ export interface Kernel {
   shouldPreempt(): boolean;
   terminateCurrent(reason: ExitReason, exitCode: number): void;
   faultCurrent(fault: ProcessFault): void;
+  /** Apply a pending block/yield decided during the last syscall (deschedules current). */
+  commitDeschedule(): void;
+  /** Move any sleeping process whose wake tick has arrived back to the ready queue. */
+  wakeSleepers(now: number): void;
+  /** The earliest sleeper wake tick, or `null` when nothing is sleeping. */
+  nextWakeTick(): number | null;
+  hasSleepers(): boolean;
   hasRunnable(): boolean;
   getCurrentPid(): ProcessId | null;
   getStatus(): KernelStatus;
@@ -135,6 +142,11 @@ export function createKernel(deps: KernelDeps): Kernel {
   let currentPid: ProcessId | null = null;
   let status: KernelStatus = 'created';
   let lastFault: KernelFault | null = null;
+
+  // Sleeping processes keyed by their wake tick (the timed wait queue).
+  const sleepers = new Map<ProcessId, number>();
+  // A block/yield decided during a syscall, committed once the CPU has advanced.
+  let pendingDeschedule: { kind: 'sleep'; wakeAtTick: number } | { kind: 'yield' } | null = null;
 
   // Per-process heap allocator, created lazily from the process heap segment.
   const heaps = new Map<ProcessId, Heap>();
@@ -324,6 +336,7 @@ export function createKernel(deps: KernelDeps): Kernel {
   function terminateProcess(pid: ProcessId, reason: ExitReason, exitCode: number | null): void {
     const pcb = table.get(pid);
     if (!pcb) return;
+    sleepers.delete(pid);
     if (pid === currentPid) pcb.registers = registerPort.capture();
     if (pcb.state !== 'terminated') transition(pcb, 'terminated', reason);
     pcb.exitCode = exitCode;
@@ -435,6 +448,16 @@ export function createKernel(deps: KernelDeps): Kernel {
         bus.publish(events.syscallCompletedEvent(now(), pid, request.id, name, outcome.value));
         return { kind: 'return', returnValue: outcome.value };
       }
+      if (outcome.kind === 'sleep') {
+        bus.publish(events.syscallCompletedEvent(now(), pid, request.id, name, 0));
+        pendingDeschedule = { kind: 'sleep', wakeAtTick: outcome.wakeAtTick };
+        return { kind: 'block', returnValue: outcome.returnValue };
+      }
+      if (outcome.kind === 'yield') {
+        bus.publish(events.syscallCompletedEvent(now(), pid, request.id, name, 0));
+        pendingDeschedule = { kind: 'yield' };
+        return { kind: 'yield' };
+      }
       bus.publish(events.syscallCompletedEvent(now(), pid, request.id, name, outcome.code));
       return { kind: 'exit', code: outcome.code };
     },
@@ -485,6 +508,56 @@ export function createKernel(deps: KernelDeps): Kernel {
       pcb.fault = fault;
       terminateProcess(currentPid, 'faulted', null);
     },
+
+    commitDeschedule() {
+      const pending = pendingDeschedule;
+      pendingDeschedule = null;
+      if (!pending || currentPid === null) return;
+      const pcb = table.get(currentPid);
+      if (!pcb) {
+        currentPid = null;
+        return;
+      }
+      // Capture the CPU state *after* the syscall advanced PC / wrote R0, so the
+      // process resumes on the instruction following the blocking syscall.
+      pcb.registers = registerPort.capture();
+      if (pending.kind === 'yield') {
+        transition(pcb, 'ready', 'yielded');
+        scheduler.requeue(schedulableOf(pcb), schedContext());
+        bus.publish(events.schedulerEnqueuedEvent(now(), pcb.pid));
+      } else {
+        transition(pcb, 'sleeping', 'sleep');
+        sleepers.set(pcb.pid, pending.wakeAtTick);
+      }
+      currentPid = null;
+      status = 'ready';
+    },
+
+    wakeSleepers(nowTick) {
+      if (sleepers.size === 0) return;
+      const due: ProcessId[] = [];
+      for (const [pid, wakeAt] of sleepers) {
+        if (wakeAt <= nowTick) due.push(pid);
+      }
+      for (const pid of due) {
+        sleepers.delete(pid);
+        const pcb = table.get(pid);
+        if (!pcb) continue;
+        transition(pcb, 'ready', 'sleep-expired');
+        scheduler.enqueue(schedulableOf(pcb));
+        bus.publish(events.schedulerEnqueuedEvent(now(), pid));
+      }
+    },
+
+    nextWakeTick() {
+      let earliest: number | null = null;
+      for (const wakeAt of sleepers.values()) {
+        if (earliest === null || wakeAt < earliest) earliest = wakeAt;
+      }
+      return earliest;
+    },
+
+    hasSleepers: () => sleepers.size > 0,
 
     hasRunnable() {
       return currentPid !== null || scheduler.size() > 0;

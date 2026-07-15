@@ -55,6 +55,8 @@ const BUILTINS: Record<string, FunctionSymbol> = {
       { name: 'value', type: INT },
     ],
   },
+  sleep: { name: 'sleep', returnType: VOID, parameters: [{ name: 'ticks', type: INT }] },
+  yield: { name: 'yield', returnType: VOID, parameters: [] },
 };
 
 export function analyze(program: ProgramNode): SemanticResult {

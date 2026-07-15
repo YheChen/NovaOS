@@ -16,7 +16,14 @@ import {
   type SchedulableProcess,
 } from '@novaos/scheduler';
 import { createTestEventBus } from '@novaos/testing';
-import { createKernel, createPidAllocator, KERNEL_PID, canTransition, isTerminal } from './index';
+import {
+  createKernel,
+  createPidAllocator,
+  KERNEL_PID,
+  canTransition,
+  isTerminal,
+  Syscall,
+} from './index';
 
 function buildCode(
   words: Array<{ opcode: number; a?: number; b?: number; c?: number }>,
@@ -237,6 +244,57 @@ function spyScheduler(seen: SchedulableProcess[]): Scheduler {
     restore() {},
   };
 }
+
+describe('blocking: sleep and yield', () => {
+  it('sleep descheduls the process until its wake tick, then makes it ready', () => {
+    const { kernel } = setup();
+    kernel.boot();
+    const created = kernel.createProcess({ name: 'p', image: { code: HELLO() } });
+    if (!created.ok) throw new Error('create failed');
+    const pid = created.value;
+    expect(kernel.dispatch()).toBe(pid);
+
+    const result = kernel.handleSyscall({
+      id: Syscall.SLEEP,
+      registers: registers({ r0: 5 }),
+      tick: asSimTime(0),
+    });
+    expect(result.kind).toBe('block');
+    kernel.commitDeschedule();
+
+    expect(kernel.getProcess(pid)?.state).toBe('sleeping');
+    expect(kernel.getCurrentPid()).toBeNull();
+    expect(kernel.hasSleepers()).toBe(true);
+    expect(kernel.nextWakeTick()).toBe(5);
+
+    kernel.wakeSleepers(4); // not due yet
+    expect(kernel.getProcess(pid)?.state).toBe('sleeping');
+    kernel.wakeSleepers(5); // due
+    expect(kernel.getProcess(pid)?.state).toBe('ready');
+    expect(kernel.hasSleepers()).toBe(false);
+  });
+
+  it('yield returns the running process to the ready queue behind its peers', () => {
+    const { kernel } = setup();
+    kernel.boot();
+    const a = kernel.createProcess({ name: 'a', image: { code: HELLO() } });
+    const b = kernel.createProcess({ name: 'b', image: { code: HELLO() } });
+    if (!a.ok || !b.ok) throw new Error('create failed');
+    expect(kernel.dispatch()).toBe(a.value);
+
+    const result = kernel.handleSyscall({
+      id: Syscall.YIELD,
+      registers: registers(),
+      tick: asSimTime(0),
+    });
+    expect(result.kind).toBe('yield');
+    kernel.commitDeschedule();
+
+    expect(kernel.getProcess(a.value)?.state).toBe('ready');
+    expect(kernel.getCurrentPid()).toBeNull();
+    expect(kernel.dispatch()).toBe(b.value); // b runs; a was requeued behind it
+  });
+});
 
 describe('SJF/SRTF burst-estimate wiring', () => {
   it('hands the scheduler remaining burst = estimate − cpuTicksUsed', () => {

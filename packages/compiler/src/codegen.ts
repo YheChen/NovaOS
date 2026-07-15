@@ -170,6 +170,16 @@ function lowerInstruction(
         emit('  STORE R0, R1, 0', s); // mem[address] = value
         break;
       }
+      // Scheduling builtins trap to the kernel: sleep(ticks) and yield().
+      if (ins.callee === 'sleep') {
+        emit(`  LOAD R0, BP, ${tempOff(ins.args[0] as number)}`, s); // R0 = ticks
+        emit('  SYSCALL 5', s);
+        break;
+      }
+      if (ins.callee === 'yield') {
+        emit('  SYSCALL 6', s);
+        break;
+      }
       // Push arguments right-to-left; argument i is read by the callee at [BP+8+4i].
       for (let i = ins.args.length - 1; i >= 0; i -= 1) {
         emit(`  LOAD R0, BP, ${tempOff(ins.args[i] as number)}`, s);

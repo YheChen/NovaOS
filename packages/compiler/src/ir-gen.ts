@@ -103,6 +103,8 @@ function lowerFunction(
     print: VOID,
     free: VOID,
     poke: VOID,
+    sleep: VOID,
+    yield: VOID,
     malloc: INT,
     peek: INT,
   };

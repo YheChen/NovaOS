@@ -33,7 +33,11 @@ export interface SyscallTrapRequest {
 export type SyscallTrapResult =
   | { readonly kind: 'return'; readonly returnValue: number }
   | { readonly kind: 'exit'; readonly code: number }
-  | { readonly kind: 'fault'; readonly code: string; readonly message: string };
+  | { readonly kind: 'fault'; readonly code: string; readonly message: string }
+  /** The process is descheduled (blocked/sleeping); write `returnValue` to R0 first. */
+  | { readonly kind: 'block'; readonly returnValue: number }
+  /** The process voluntarily yields the CPU; R0 is left unchanged. */
+  | { readonly kind: 'yield' };
 
 export interface SyscallTrap {
   invoke(request: SyscallTrapRequest): SyscallTrapResult;
