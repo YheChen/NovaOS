@@ -311,6 +311,28 @@ function lowerFunction(
         startBlock(exitBlk);
         break;
       }
+      case 'DoWhileStatement': {
+        const bodyBlk = newBlock('do_body');
+        const headBlk = newBlock('do_head');
+        const exitBlk = newBlock('do_exit');
+        terminate({ kind: 'jump', target: bodyBlk.id, span: stmt.span }); // body runs once first
+        startBlock(bodyBlk);
+        loopTargets.push({ breakBlock: exitBlk.id, continueBlock: headBlk.id });
+        genStmt(stmt.body);
+        loopTargets.pop();
+        terminate({ kind: 'jump', target: headBlk.id, span: stmt.span });
+        startBlock(headBlk);
+        const condition = genExpr(stmt.condition);
+        terminate({
+          kind: 'branch',
+          condition,
+          thenBlock: bodyBlk.id,
+          elseBlock: exitBlk.id,
+          span: stmt.span,
+        });
+        startBlock(exitBlk);
+        break;
+      }
       case 'ForStatement': {
         // The initializer is scoped to the loop; `continue` runs the update.
         scopes.push(new Map());

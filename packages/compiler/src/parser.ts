@@ -325,6 +325,7 @@ export function parse(source: string, fileId?: FileId): ParseResult {
     if (check('punctuation', '{')) return parseBlock();
     if (check('keyword', 'if')) return parseIf();
     if (check('keyword', 'while')) return parseWhile();
+    if (check('keyword', 'do')) return parseDoWhile();
     if (check('keyword', 'for')) return parseFor();
     if (check('keyword', 'break')) return parseBreak();
     if (check('keyword', 'continue')) return parseContinue();
@@ -373,7 +374,23 @@ export function parse(source: string, fileId?: FileId): ParseResult {
     };
   };
 
-  // Desugar `for (init; cond; update) body` into `{ init; while (cond) { body; update; } }`.
+  const parseDoWhile = (): StatementNode => {
+    const kw = advance(); // do
+    const body = parseStatement();
+    expect('keyword', 'while', '`while` after the `do` body');
+    expect('punctuation', '(', '`(` after `while`');
+    const condition = parseExpression();
+    expect('punctuation', ')', '`)` after the condition');
+    const semi = expect('punctuation', ';', '`;` after `do`/`while`');
+    return {
+      kind: 'DoWhileStatement',
+      id: id(),
+      body,
+      condition,
+      span: spanBetween(kw.span, semi.span),
+    };
+  };
+
   const parseFor = (): StatementNode => {
     const kw = advance(); // for
     expect('punctuation', '(', '`(` after `for`');

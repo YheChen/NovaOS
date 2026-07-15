@@ -235,6 +235,41 @@ int main() {
     expect(run('prec.c', 'int main() { print(1 | 2 & 2); return 0; }')).toBe('3');
   });
 
+  it('runs a do/while loop (sum 0..4 => 10)', () => {
+    expect(
+      run(
+        'do.c',
+        `int main() {
+  int s = 0;
+  int i = 0;
+  do {
+    s = s + i;
+    i = i + 1;
+  } while (i < 5);
+  print(s);
+  return 0;
+}`,
+      ),
+    ).toBe('10');
+  });
+
+  it('executes a do/while body once even when the condition is false', () => {
+    expect(
+      run(
+        'do-once.c',
+        `int main() {
+  int i = 10;
+  int runs = 0;
+  do {
+    runs = runs + 1;
+  } while (i < 5);
+  print(runs);
+  return 0;
+}`,
+      ),
+    ).toBe('1');
+  });
+
   it('breaks out of a loop early', () => {
     expect(
       run(
