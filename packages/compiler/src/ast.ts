@@ -141,6 +141,14 @@ export interface WhileStatementNode {
   readonly span: SourceSpan;
 }
 
+export interface DoWhileStatementNode {
+  readonly kind: 'DoWhileStatement';
+  readonly id: AstNodeId;
+  readonly body: StatementNode;
+  readonly condition: ExpressionNode;
+  readonly span: SourceSpan;
+}
+
 export interface ForStatementNode {
   readonly kind: 'ForStatement';
   readonly id: AstNodeId;
@@ -182,6 +190,7 @@ export type StatementNode =
   | VariableDeclarationNode
   | IfStatementNode
   | WhileStatementNode
+  | DoWhileStatementNode
   | ForStatementNode
   | BreakStatementNode
   | ContinueStatementNode

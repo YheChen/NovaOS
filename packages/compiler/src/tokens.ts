@@ -17,6 +17,7 @@ export const KEYWORDS = new Set([
   'if',
   'else',
   'while',
+  'do',
   'for',
   'break',
   'continue',

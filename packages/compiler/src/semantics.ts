@@ -333,6 +333,14 @@ export function analyze(program: ProgramNode): SemanticResult {
         checkStatement(stmt.body, scope, returnType, loopDepth + 1);
         break;
       }
+      case 'DoWhileStatement': {
+        checkStatement(stmt.body, scope, returnType, loopDepth + 1);
+        const cond = typeOf(stmt.condition, scope);
+        if (!typesEqual(cond, BOOL)) {
+          err('A `do`/`while` condition must be bool.', stmt.condition.span);
+        }
+        break;
+      }
       case 'ForStatement': {
         // The initializer's declarations are scoped to the loop.
         const child: Scope = { vars: new Map(), parent: scope };
