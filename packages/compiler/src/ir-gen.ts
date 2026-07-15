@@ -105,8 +105,11 @@ function lowerFunction(
     poke: VOID,
     sleep: VOID,
     yield: VOID,
+    lock: VOID,
+    unlock: VOID,
     malloc: INT,
     peek: INT,
+    shared: INT,
   };
   const returnTypeOf = (callee: string): ToyType =>
     BUILTIN_RETURNS[callee] ?? functions.get(callee)?.returnType ?? VOID;

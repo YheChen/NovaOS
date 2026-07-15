@@ -95,6 +95,8 @@ export interface Kernel {
   nextWakeTick(): number | null;
   hasSleepers(): boolean;
   hasRunnable(): boolean;
+  /** Base address of the shared-memory region (for tests / the concurrency demo). */
+  getSharedBase(): number;
   getCurrentPid(): ProcessId | null;
   getStatus(): KernelStatus;
   getProcess(pid: ProcessId): ProcessControlBlock | undefined;
@@ -108,6 +110,9 @@ export interface Kernel {
 }
 
 const BOOT_STAGES = ['cpu', 'memory', 'scheduler', 'syscalls', 'init', 'shell'] as const;
+
+/** Bytes of shared memory reserved at boot (addressable via the `shared` syscall). */
+const SHARED_REGION_BYTES = 64;
 
 function initialRegisters(pc: number, sp: number): RegisterFileSnapshot {
   return {
@@ -145,8 +150,17 @@ export function createKernel(deps: KernelDeps): Kernel {
 
   // Sleeping processes keyed by their wake tick (the timed wait queue).
   const sleepers = new Map<ProcessId, number>();
+  // Mutexes by id, and the FIFO of processes blocked on each wait channel.
+  const mutexes = new Map<number, { owner: ProcessId | null }>();
+  const channelWaiters = new Map<number, ProcessId[]>();
+  // Base address of the shared-memory region (set at boot).
+  let sharedBase = 0;
   // A block/yield decided during a syscall, committed once the CPU has advanced.
-  let pendingDeschedule: { kind: 'sleep'; wakeAtTick: number } | { kind: 'yield' } | null = null;
+  let pendingDeschedule:
+    | { kind: 'sleep'; wakeAtTick: number }
+    | { kind: 'yield' }
+    | { kind: 'block'; channel: number }
+    | null = null;
 
   // Per-process heap allocator, created lazily from the process heap segment.
   const heaps = new Map<ProcessId, Heap>();
@@ -162,6 +176,46 @@ export function createKernel(deps: KernelDeps): Kernel {
 
   const now = () => clock.now();
   const schedContext = (): SchedulingContext => ({ currentPid, tick: now(), random });
+
+  // --- Mutexes + wait channels --------------------------------------------
+  function getOrCreateMutex(id: number): { owner: ProcessId | null } {
+    let m = mutexes.get(id);
+    if (!m) {
+      m = { owner: null };
+      mutexes.set(id, m);
+    }
+    return m;
+  }
+  /** Acquire mutex `id` for `pid`; false means it is held elsewhere (must block). */
+  function acquireLockFor(id: number, pid: ProcessId): boolean {
+    const m = getOrCreateMutex(id);
+    if (m.owner === null) {
+      m.owner = pid;
+      return true;
+    }
+    return m.owner === pid; // already ours (re-entrant)
+  }
+  /** Hand mutex `id` to the next FIFO waiter, or free it when none wait. */
+  function grantToNextWaiter(id: number, m: { owner: ProcessId | null }): void {
+    const q = channelWaiters.get(id);
+    const next = q && q.length > 0 ? q.shift() : undefined;
+    if (next === undefined) {
+      m.owner = null;
+      return;
+    }
+    m.owner = next;
+    const pcb = table.get(next);
+    if (pcb) {
+      transition(pcb, 'ready', 'lock-granted');
+      scheduler.enqueue(schedulableOf(pcb));
+      bus.publish(events.schedulerEnqueuedEvent(now(), next));
+    }
+  }
+  function releaseLockFor(id: number, pid: ProcessId): void {
+    const m = mutexes.get(id);
+    if (!m || m.owner !== pid) return; // releasing a lock you do not hold is a no-op
+    grantToNextWaiter(id, m);
+  }
 
   function raiseKernelFault(
     code: string,
@@ -337,6 +391,15 @@ export function createKernel(deps: KernelDeps): Kernel {
     const pcb = table.get(pid);
     if (!pcb) return;
     sleepers.delete(pid);
+    // Release any mutexes this process holds (handing them to a waiter), and
+    // drop it from any wait channel it was blocked on.
+    for (const [id, m] of mutexes) {
+      if (m.owner === pid) grantToNextWaiter(id, m);
+    }
+    for (const q of channelWaiters.values()) {
+      const index = q.indexOf(pid);
+      if (index >= 0) q.splice(index, 1);
+    }
     if (pid === currentPid) pcb.registers = registerPort.capture();
     if (pcb.state !== 'terminated') transition(pcb, 'terminated', reason);
     pcb.exitCode = exitCode;
@@ -382,6 +445,14 @@ export function createKernel(deps: KernelDeps): Kernel {
             size: kernelReservedBytes,
             label: 'kernel',
           });
+          // A small shared-memory region every process can peek/poke via shared(i).
+          const sharedSeg = memory.reserve({
+            ownerPid: null,
+            kind: 'data',
+            size: SHARED_REGION_BYTES,
+            label: 'shared',
+          });
+          if (sharedSeg.ok) sharedBase = sharedSeg.value.base;
         } else if (stage === 'scheduler') {
           bus.publish(
             events.schedulerInitializedEvent(
@@ -442,6 +513,9 @@ export function createKernel(deps: KernelDeps): Kernel {
         emitOutput: (value, text) => emitOutput(pid, value, text),
         heapAlloc: (size) => heapFor(pid)?.malloc(size) ?? 0,
         heapFree: (address) => heapFor(pid)?.free(address) ?? false,
+        acquireLock: (id) => acquireLockFor(id, pid),
+        releaseLock: (id) => releaseLockFor(id, pid),
+        sharedAddress: (index) => sharedBase + index * 4,
       });
 
       if (outcome.kind === 'return') {
@@ -457,6 +531,13 @@ export function createKernel(deps: KernelDeps): Kernel {
         bus.publish(events.syscallCompletedEvent(now(), pid, request.id, name, 0));
         pendingDeschedule = { kind: 'yield' };
         return { kind: 'yield' };
+      }
+      if (outcome.kind === 'block-on-channel') {
+        bus.publish(
+          events.syscallCompletedEvent(now(), pid, request.id, name, outcome.returnValue),
+        );
+        pendingDeschedule = { kind: 'block', channel: outcome.channel };
+        return { kind: 'block', returnValue: outcome.returnValue };
       }
       bus.publish(events.syscallCompletedEvent(now(), pid, request.id, name, outcome.code));
       return { kind: 'exit', code: outcome.code };
@@ -525,9 +606,14 @@ export function createKernel(deps: KernelDeps): Kernel {
         transition(pcb, 'ready', 'yielded');
         scheduler.requeue(schedulableOf(pcb), schedContext());
         bus.publish(events.schedulerEnqueuedEvent(now(), pcb.pid));
-      } else {
+      } else if (pending.kind === 'sleep') {
         transition(pcb, 'sleeping', 'sleep');
         sleepers.set(pcb.pid, pending.wakeAtTick);
+      } else {
+        transition(pcb, 'blocked', 'blocked-on-channel');
+        const q = channelWaiters.get(pending.channel) ?? [];
+        q.push(pcb.pid);
+        channelWaiters.set(pending.channel, q);
       }
       currentPid = null;
       status = 'ready';
@@ -562,6 +648,8 @@ export function createKernel(deps: KernelDeps): Kernel {
     hasRunnable() {
       return currentPid !== null || scheduler.size() > 0;
     },
+
+    getSharedBase: () => sharedBase,
 
     getCurrentPid: () => currentPid,
     getStatus: () => status,
