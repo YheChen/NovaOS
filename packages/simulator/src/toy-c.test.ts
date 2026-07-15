@@ -239,6 +239,15 @@ int main() {
     expect(run('sched.c', 'int main() { sleep(3); yield(); print(9); return 0; }')).toBe('9');
   });
 
+  it('supports send/receive IPC builtins', () => {
+    expect(
+      run(
+        'pipe.c',
+        'int main() { send(0, 7); send(0, 35); print(receive(0) + receive(0)); return 0; }',
+      ),
+    ).toBe('42');
+  });
+
   it('supports lock/unlock and shared-memory builtins', () => {
     expect(
       run(

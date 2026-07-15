@@ -153,6 +153,8 @@ export function createKernel(deps: KernelDeps): Kernel {
   // Mutexes by id, and the FIFO of processes blocked on each wait channel.
   const mutexes = new Map<number, { owner: ProcessId | null }>();
   const channelWaiters = new Map<number, ProcessId[]>();
+  // Message-passing pipes: a FIFO of buffered words per pipe id.
+  const pipes = new Map<number, number[]>();
   // Base address of the shared-memory region (set at boot).
   let sharedBase = 0;
   // A block/yield decided during a syscall, committed once the CPU has advanced.
@@ -215,6 +217,35 @@ export function createKernel(deps: KernelDeps): Kernel {
     const m = mutexes.get(id);
     if (!m || m.owner !== pid) return; // releasing a lock you do not hold is a no-op
     grantToNextWaiter(id, m);
+  }
+
+  // --- Pipes (message passing) --------------------------------------------
+  // Pipe wait channels live in a separate numeric range so they never collide
+  // with mutex channels (which are keyed by raw mutex id).
+  const PIPE_CHANNEL_OFFSET = 1_000_000;
+  function pipeReceive(id: number): { value: number } | { channel: number } {
+    const buffer = pipes.get(id);
+    if (buffer && buffer.length > 0) return { value: buffer.shift() as number };
+    return { channel: PIPE_CHANNEL_OFFSET + id };
+  }
+  function pipeSend(id: number, value: number): void {
+    const word = value >>> 0;
+    const q = channelWaiters.get(PIPE_CHANNEL_OFFSET + id);
+    const receiver = q && q.length > 0 ? q.shift() : undefined;
+    if (receiver !== undefined) {
+      // Rendezvous: hand the value straight to the woken receiver's R0.
+      const pcb = table.get(receiver);
+      if (pcb) {
+        pcb.registers = { ...pcb.registers, r0: word };
+        transition(pcb, 'ready', 'pipe-received');
+        scheduler.enqueue(schedulableOf(pcb));
+        bus.publish(events.schedulerEnqueuedEvent(now(), receiver));
+        return;
+      }
+    }
+    const buffer = pipes.get(id) ?? [];
+    buffer.push(word);
+    pipes.set(id, buffer);
   }
 
   function raiseKernelFault(
@@ -516,6 +547,8 @@ export function createKernel(deps: KernelDeps): Kernel {
         acquireLock: (id) => acquireLockFor(id, pid),
         releaseLock: (id) => releaseLockFor(id, pid),
         sharedAddress: (index) => sharedBase + index * 4,
+        pipeSend: (id, value) => pipeSend(id, value),
+        pipeReceive: (id) => pipeReceive(id),
       });
 
       if (outcome.kind === 'return') {

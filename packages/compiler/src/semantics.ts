@@ -60,6 +60,15 @@ const BUILTINS: Record<string, FunctionSymbol> = {
   lock: { name: 'lock', returnType: VOID, parameters: [{ name: 'id', type: INT }] },
   unlock: { name: 'unlock', returnType: VOID, parameters: [{ name: 'id', type: INT }] },
   shared: { name: 'shared', returnType: INT, parameters: [{ name: 'index', type: INT }] },
+  send: {
+    name: 'send',
+    returnType: VOID,
+    parameters: [
+      { name: 'pipe', type: INT },
+      { name: 'value', type: INT },
+    ],
+  },
+  receive: { name: 'receive', returnType: INT, parameters: [{ name: 'pipe', type: INT }] },
 };
 
 export function analyze(program: ProgramNode): SemanticResult {

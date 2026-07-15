@@ -337,6 +337,44 @@ describe('mutex + shared-memory syscalls', () => {
   });
 });
 
+describe('pipes (IPC)', () => {
+  it('buffers a sent value and returns it on the next receive', () => {
+    const { kernel } = setup();
+    kernel.boot();
+    const p = kernel.createProcess({ name: 'p', image: { code: HELLO() } });
+    if (!p.ok) throw new Error('create failed');
+    kernel.dispatch();
+    expect(
+      kernel.handleSyscall({
+        id: Syscall.SEND,
+        registers: registers({ r0: 0, r1: 99 }),
+        tick: asSimTime(0),
+      }).kind,
+    ).toBe('return');
+    expect(
+      kernel.handleSyscall({
+        id: Syscall.RECEIVE,
+        registers: registers({ r0: 0 }),
+        tick: asSimTime(0),
+      }),
+    ).toEqual({ kind: 'return', returnValue: 99 });
+  });
+
+  it('blocks a receive on an empty pipe', () => {
+    const { kernel } = setup();
+    kernel.boot();
+    const p = kernel.createProcess({ name: 'p', image: { code: HELLO() } });
+    if (!p.ok) throw new Error('create failed');
+    kernel.dispatch();
+    const result = kernel.handleSyscall({
+      id: Syscall.RECEIVE,
+      registers: registers({ r0: 0 }),
+      tick: asSimTime(0),
+    });
+    expect(result.kind).toBe('block');
+  });
+});
+
 describe('SJF/SRTF burst-estimate wiring', () => {
   it('hands the scheduler remaining burst = estimate − cpuTicksUsed', () => {
     const seen: SchedulableProcess[] = [];

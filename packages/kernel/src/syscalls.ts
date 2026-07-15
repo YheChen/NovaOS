@@ -11,6 +11,8 @@ export const Syscall = {
   LOCK: 7,
   UNLOCK: 8,
   SHARED: 9,
+  SEND: 10,
+  RECEIVE: 11,
 } as const;
 
 export const SYSCALL_NAMES: Record<number, string> = {
@@ -23,6 +25,8 @@ export const SYSCALL_NAMES: Record<number, string> = {
   [Syscall.LOCK]: 'lock',
   [Syscall.UNLOCK]: 'unlock',
   [Syscall.SHARED]: 'shared',
+  [Syscall.SEND]: 'send',
+  [Syscall.RECEIVE]: 'receive',
 };
 
 export function syscallName(id: number): string {
@@ -58,6 +62,10 @@ export interface SyscallHandlerContext {
   releaseLock(id: number): void;
   /** Absolute address of shared word `index` in the kernel's shared region. */
   sharedAddress(index: number): number;
+  /** Send `value` on pipe `id` (delivered to a blocked receiver, else buffered). */
+  pipeSend(id: number, value: number): void;
+  /** Receive from pipe `id`: a buffered `value`, or a `channel` to block on. */
+  pipeReceive(id: number): { readonly value: number } | { readonly channel: number };
 }
 
 export type SyscallHandler = (context: SyscallHandlerContext) => SyscallOutcome;
@@ -116,6 +124,20 @@ const shared: SyscallHandler = (context) => ({
   value: context.sharedAddress(context.registers.r0 | 0),
 });
 
+// SYSCALL 10 — send(R0 = pipe, R1 = value). Never blocks (unbounded buffer).
+const send: SyscallHandler = (context) => {
+  context.pipeSend(context.registers.r0 | 0, context.registers.r1 | 0);
+  return { kind: 'return', value: 1 };
+};
+
+// SYSCALL 11 — receive(R0 = pipe). Returns the next value, or blocks until one
+// is sent (the sender writes the value straight into R0 on wake).
+const receive: SyscallHandler = (context) => {
+  const result = context.pipeReceive(context.registers.r0 | 0);
+  if ('value' in result) return { kind: 'return', value: result.value };
+  return { kind: 'block-on-channel', channel: result.channel, returnValue: 0 };
+};
+
 export const SYSCALL_HANDLERS: Record<number, SyscallHandler> = {
   [Syscall.PRINT]: print,
   [Syscall.MALLOC]: malloc,
@@ -126,4 +148,6 @@ export const SYSCALL_HANDLERS: Record<number, SyscallHandler> = {
   [Syscall.LOCK]: lock,
   [Syscall.UNLOCK]: unlock,
   [Syscall.SHARED]: shared,
+  [Syscall.SEND]: send,
+  [Syscall.RECEIVE]: receive,
 };
