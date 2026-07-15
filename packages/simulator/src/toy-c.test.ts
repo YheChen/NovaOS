@@ -239,6 +239,23 @@ int main() {
     expect(run('sched.c', 'int main() { sleep(3); yield(); print(9); return 0; }')).toBe('9');
   });
 
+  it('supports lock/unlock and shared-memory builtins', () => {
+    expect(
+      run(
+        'conc.c',
+        `int main() {
+  int a = shared(0);
+  lock(0);
+  poke(a, 41);
+  poke(a, peek(a) + 1);
+  unlock(0);
+  print(peek(a));
+  return 0;
+}`,
+      ),
+    ).toBe('42');
+  });
+
   it('returns a compile error (not a crash) for invalid Toy C', () => {
     const report = runner.run('bad.c', 'int main() { return y; }');
     expect(report.ok).toBe(false);

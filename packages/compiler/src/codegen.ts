@@ -180,6 +180,19 @@ function lowerInstruction(
         emit('  SYSCALL 6', s);
         break;
       }
+      // Concurrency builtins: lock(id) / unlock(id) trap to the kernel mutex.
+      if (ins.callee === 'lock' || ins.callee === 'unlock') {
+        emit(`  LOAD R0, BP, ${tempOff(ins.args[0] as number)}`, s); // R0 = mutex id
+        emit(ins.callee === 'lock' ? '  SYSCALL 7' : '  SYSCALL 8', s);
+        break;
+      }
+      // shared(index) returns the address of a shared-memory word.
+      if (ins.callee === 'shared') {
+        emit(`  LOAD R0, BP, ${tempOff(ins.args[0] as number)}`, s); // R0 = index
+        emit('  SYSCALL 9', s);
+        if (ins.target !== null) emit(`  STORE R0, BP, ${tempOff(ins.target)}`, s);
+        break;
+      }
       // Push arguments right-to-left; argument i is read by the callee at [BP+8+4i].
       for (let i = ins.args.length - 1; i >= 0; i -= 1) {
         emit(`  LOAD R0, BP, ${tempOff(ins.args[i] as number)}`, s);

@@ -296,6 +296,47 @@ describe('blocking: sleep and yield', () => {
   });
 });
 
+describe('mutex + shared-memory syscalls', () => {
+  it('acquires and releases a mutex through the kernel', () => {
+    const { kernel } = setup();
+    kernel.boot();
+    const p = kernel.createProcess({ name: 'p', image: { code: HELLO() } });
+    if (!p.ok) throw new Error('create failed');
+    kernel.dispatch();
+    expect(
+      kernel.handleSyscall({
+        id: Syscall.LOCK,
+        registers: registers({ r0: 0 }),
+        tick: asSimTime(0),
+      }).kind,
+    ).toBe('return'); // acquired (free)
+    expect(
+      kernel.handleSyscall({
+        id: Syscall.UNLOCK,
+        registers: registers({ r0: 0 }),
+        tick: asSimTime(0),
+      }).kind,
+    ).toBe('return');
+  });
+
+  it('exposes a stable shared-memory address', () => {
+    const { kernel } = setup();
+    kernel.boot();
+    const p = kernel.createProcess({ name: 'p', image: { code: HELLO() } });
+    if (!p.ok) throw new Error('create failed');
+    kernel.dispatch();
+    const result = kernel.handleSyscall({
+      id: Syscall.SHARED,
+      registers: registers({ r0: 2 }),
+      tick: asSimTime(0),
+    });
+    expect(result.kind).toBe('return');
+    if (result.kind === 'return') {
+      expect(result.returnValue).toBe(kernel.getSharedBase() + 8); // word 2 = base + 8 bytes
+    }
+  });
+});
+
 describe('SJF/SRTF burst-estimate wiring', () => {
   it('hands the scheduler remaining burst = estimate − cpuTicksUsed', () => {
     const seen: SchedulableProcess[] = [];
