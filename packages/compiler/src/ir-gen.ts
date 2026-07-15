@@ -57,6 +57,8 @@ function lowerFunction(
   let nextBlock = 0;
   const blocks: BuildBlock[] = [];
   let current: BuildBlock | null = null;
+  // Stack of enclosing loops for `break` (exit) and `continue` (head/update).
+  const loopTargets: Array<{ breakBlock: number; continueBlock: number }> = [];
 
   const freshTemp = (): IRValueId => nextTemp++;
   const declareLocal = (name: string, type: ToyType, isParam: boolean, size = 1): number => {
@@ -302,12 +304,60 @@ function lowerFunction(
           span: stmt.span,
         });
         startBlock(bodyBlk);
+        loopTargets.push({ breakBlock: exitBlk.id, continueBlock: headBlk.id });
         genStmt(stmt.body);
+        loopTargets.pop();
         terminate({ kind: 'jump', target: headBlk.id, span: stmt.span });
         startBlock(exitBlk);
         break;
       }
+      case 'ForStatement': {
+        // The initializer is scoped to the loop; `continue` runs the update.
+        scopes.push(new Map());
+        if (stmt.init) genStmt(stmt.init);
+        const headBlk = newBlock('for_head');
+        const bodyBlk = newBlock('for_body');
+        const updateBlk = newBlock('for_update');
+        const exitBlk = newBlock('for_exit');
+        terminate({ kind: 'jump', target: headBlk.id, span: stmt.span });
+        startBlock(headBlk);
+        const condition = stmt.condition ? genExpr(stmt.condition) : constTrue(stmt.span);
+        terminate({
+          kind: 'branch',
+          condition,
+          thenBlock: bodyBlk.id,
+          elseBlock: exitBlk.id,
+          span: stmt.span,
+        });
+        startBlock(bodyBlk);
+        loopTargets.push({ breakBlock: exitBlk.id, continueBlock: updateBlk.id });
+        genStmt(stmt.body);
+        loopTargets.pop();
+        terminate({ kind: 'jump', target: updateBlk.id, span: stmt.span });
+        startBlock(updateBlk);
+        if (stmt.update) genExpr(stmt.update);
+        terminate({ kind: 'jump', target: headBlk.id, span: stmt.span });
+        startBlock(exitBlk);
+        scopes.pop();
+        break;
+      }
+      case 'BreakStatement': {
+        const target = loopTargets[loopTargets.length - 1];
+        if (target) terminate({ kind: 'jump', target: target.breakBlock, span: stmt.span });
+        break;
+      }
+      case 'ContinueStatement': {
+        const target = loopTargets[loopTargets.length - 1];
+        if (target) terminate({ kind: 'jump', target: target.continueBlock, span: stmt.span });
+        break;
+      }
     }
+  };
+
+  const constTrue = (span: SourceSpan): IRValueId => {
+    const t = freshTemp();
+    emit({ kind: 'const', target: t, value: 1, span });
+    return t;
   };
 
   const zeroTemp = (span: SourceSpan): IRValueId => {

@@ -141,6 +141,28 @@ export interface WhileStatementNode {
   readonly span: SourceSpan;
 }
 
+export interface ForStatementNode {
+  readonly kind: 'ForStatement';
+  readonly id: AstNodeId;
+  readonly init: StatementNode | null;
+  readonly condition: ExpressionNode | null;
+  readonly update: ExpressionNode | null;
+  readonly body: StatementNode;
+  readonly span: SourceSpan;
+}
+
+export interface BreakStatementNode {
+  readonly kind: 'BreakStatement';
+  readonly id: AstNodeId;
+  readonly span: SourceSpan;
+}
+
+export interface ContinueStatementNode {
+  readonly kind: 'ContinueStatement';
+  readonly id: AstNodeId;
+  readonly span: SourceSpan;
+}
+
 export interface ReturnStatementNode {
   readonly kind: 'ReturnStatement';
   readonly id: AstNodeId;
@@ -160,6 +182,9 @@ export type StatementNode =
   | VariableDeclarationNode
   | IfStatementNode
   | WhileStatementNode
+  | ForStatementNode
+  | BreakStatementNode
+  | ContinueStatementNode
   | ReturnStatementNode
   | ExpressionStatementNode;
 

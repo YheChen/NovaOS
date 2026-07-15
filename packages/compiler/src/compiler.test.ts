@@ -101,6 +101,21 @@ describe('semantics', () => {
   it('reports duplicate declarations', () => {
     expect(errs('int main() { int x = 1; int x = 2; return 0; }')).toContain('sema/duplicate');
   });
+
+  it('rejects break/continue outside a loop', () => {
+    expect(errs('int main() { break; return 0; }')).toContain('sema/illegal-jump');
+    expect(errs('int main() { continue; return 0; }')).toContain('sema/illegal-jump');
+  });
+
+  it('accepts break and continue inside a loop', () => {
+    expect(
+      analyze(
+        parse(
+          'int main() { while (true) { break; } for (int i=0;i<1;i+=1) { continue; } return 0; }',
+        ).program,
+      ).diagnostics,
+    ).toHaveLength(0);
+  });
 });
 
 describe('compileToyC', () => {
