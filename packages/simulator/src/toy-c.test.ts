@@ -235,6 +235,44 @@ int main() {
     expect(run('prec.c', 'int main() { print(1 | 2 & 2); return 0; }')).toBe('3');
   });
 
+  it('breaks out of a loop early', () => {
+    expect(
+      run(
+        'brk.c',
+        `int main() {
+  int s = 0;
+  int i = 0;
+  while (i < 10) {
+    if (i == 5) { break; }
+    s = s + i;
+    i = i + 1;
+  }
+  print(s);
+  return 0;
+}`,
+      ),
+    ).toBe('10'); // 0+1+2+3+4
+  });
+
+  it('continues in a for loop, still running the update clause', () => {
+    // If `continue` skipped the update (i += 1), this would loop forever; the sum
+    // of the odd numbers below 10 proves the update block runs.
+    expect(
+      run(
+        'cont.c',
+        `int main() {
+  int s = 0;
+  for (int i = 0; i < 10; i += 1) {
+    if (i % 2 == 0) { continue; }
+    s += i;
+  }
+  print(s);
+  return 0;
+}`,
+      ),
+    ).toBe('25'); // 1+3+5+7+9
+  });
+
   it('supports the sleep() and yield() scheduling builtins', () => {
     expect(run('sched.c', 'int main() { sleep(3); yield(); print(9); return 0; }')).toBe('9');
   });

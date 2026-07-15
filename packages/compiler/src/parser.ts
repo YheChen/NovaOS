@@ -326,6 +326,8 @@ export function parse(source: string, fileId?: FileId): ParseResult {
     if (check('keyword', 'if')) return parseIf();
     if (check('keyword', 'while')) return parseWhile();
     if (check('keyword', 'for')) return parseFor();
+    if (check('keyword', 'break')) return parseBreak();
+    if (check('keyword', 'continue')) return parseContinue();
     if (check('keyword', 'return')) return parseReturn();
     if (peek().kind === 'keyword' && TYPE_NAMES.has(peek().lexeme)) return parseVarDecl();
     const expr = parseExpression();
@@ -398,35 +400,27 @@ export function parse(source: string, fileId?: FileId): ParseResult {
     const close = expect('punctuation', ')', '`)` after the for-clauses');
     const body = parseStatement();
 
-    const cond: ExpressionNode = condition ?? {
-      kind: 'BooleanLiteral',
-      id: id(),
-      value: true,
-      span: kw.span,
-    };
-    const whileBodyStatements: StatementNode[] = [body];
-    if (update) {
-      whileBodyStatements.push({
-        kind: 'ExpressionStatement',
-        id: id(),
-        expression: update,
-        span: update.span,
-      });
-    }
-    const whileStmt: StatementNode = {
-      kind: 'WhileStatement',
-      id: id(),
-      condition: cond,
-      body: { kind: 'BlockStatement', id: id(), statements: whileBodyStatements, span: body.span },
-      span: spanBetween(kw.span, body.span),
-    };
-    const outer: StatementNode[] = init ? [init, whileStmt] : [whileStmt];
     return {
-      kind: 'BlockStatement',
+      kind: 'ForStatement',
       id: id(),
-      statements: outer,
+      init,
+      condition,
+      update,
+      body,
       span: spanBetween(kw.span, close.span),
     };
+  };
+
+  const parseBreak = (): StatementNode => {
+    const kw = advance();
+    const semi = expect('punctuation', ';', '`;` after `break`');
+    return { kind: 'BreakStatement', id: id(), span: spanBetween(kw.span, semi.span) };
+  };
+
+  const parseContinue = (): StatementNode => {
+    const kw = advance();
+    const semi = expect('punctuation', ';', '`;` after `continue`');
+    return { kind: 'ContinueStatement', id: id(), span: spanBetween(kw.span, semi.span) };
   };
 
   const parseReturn = (): StatementNode => {

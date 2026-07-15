@@ -276,11 +276,16 @@ export function analyze(program: ProgramNode): SemanticResult {
   };
 
   // --- Statement checking --------------------------------------------------
-  const checkStatement = (stmt: StatementNode, scope: Scope, returnType: ToyType): void => {
+  const checkStatement = (
+    stmt: StatementNode,
+    scope: Scope,
+    returnType: ToyType,
+    loopDepth = 0,
+  ): void => {
     switch (stmt.kind) {
       case 'BlockStatement': {
         const child: Scope = { vars: new Map(), parent: scope };
-        for (const s of stmt.statements) checkStatement(s, child, returnType);
+        for (const s of stmt.statements) checkStatement(s, child, returnType, loopDepth);
         break;
       }
       case 'VariableDeclaration': {
@@ -318,16 +323,34 @@ export function analyze(program: ProgramNode): SemanticResult {
       case 'IfStatement': {
         const cond = typeOf(stmt.condition, scope);
         if (!typesEqual(cond, BOOL)) err('An `if` condition must be bool.', stmt.condition.span);
-        checkStatement(stmt.thenBranch, scope, returnType);
-        if (stmt.elseBranch) checkStatement(stmt.elseBranch, scope, returnType);
+        checkStatement(stmt.thenBranch, scope, returnType, loopDepth);
+        if (stmt.elseBranch) checkStatement(stmt.elseBranch, scope, returnType, loopDepth);
         break;
       }
       case 'WhileStatement': {
         const cond = typeOf(stmt.condition, scope);
         if (!typesEqual(cond, BOOL)) err('A `while` condition must be bool.', stmt.condition.span);
-        checkStatement(stmt.body, scope, returnType);
+        checkStatement(stmt.body, scope, returnType, loopDepth + 1);
         break;
       }
+      case 'ForStatement': {
+        // The initializer's declarations are scoped to the loop.
+        const child: Scope = { vars: new Map(), parent: scope };
+        if (stmt.init) checkStatement(stmt.init, child, returnType, loopDepth);
+        if (stmt.condition) {
+          const cond = typeOf(stmt.condition, child);
+          if (!typesEqual(cond, BOOL)) err('A `for` condition must be bool.', stmt.condition.span);
+        }
+        if (stmt.update) typeOf(stmt.update, child);
+        checkStatement(stmt.body, child, returnType, loopDepth + 1);
+        break;
+      }
+      case 'BreakStatement':
+        if (loopDepth === 0) err('`break` outside of a loop.', stmt.span, 'sema/illegal-jump');
+        break;
+      case 'ContinueStatement':
+        if (loopDepth === 0) err('`continue` outside of a loop.', stmt.span, 'sema/illegal-jump');
+        break;
       case 'ReturnStatement': {
         if (stmt.value) {
           const valueType = typeOf(stmt.value, scope);

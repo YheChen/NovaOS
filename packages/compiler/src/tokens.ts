@@ -18,6 +18,8 @@ export const KEYWORDS = new Set([
   'else',
   'while',
   'for',
+  'break',
+  'continue',
   'return',
   'true',
   'false',
