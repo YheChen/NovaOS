@@ -35,6 +35,7 @@ import type {
 } from '@novaos/kernel';
 import {
   createIdentityPaging,
+  createDemandPager,
   createTranslatingMemory,
   type AddressTranslator,
   type TranslationStats,
@@ -47,6 +48,8 @@ export type SchedulerChoice =
   'fifo' | 'round-robin' | 'priority' | 'lottery' | 'sjf' | 'srtf' | 'mlfq';
 
 export interface PagingRuntimeOptions {
+  /** `identity` pre-maps all pages (no faults); `demand` faults pages in per process. */
+  readonly mode?: 'identity' | 'demand';
   readonly pageSizeBytes?: number;
   readonly tlbCapacity?: number;
 }
@@ -163,11 +166,15 @@ export function createNovaRuntime(options: NovaRuntimeOptions = {}): NovaRuntime
   // The kernel keeps the real (physical) memory for setup; only the CPU's view
   // is translated, so behavior is unchanged while accesses walk a page table.
   const pagingOpt = options.paging;
+  const pagingConfig = { ramBytes, ...(typeof pagingOpt === 'object' ? pagingOpt : {}) };
+  const pagingMode = typeof pagingOpt === 'object' ? (pagingOpt.mode ?? 'identity') : 'identity';
   const translator: AddressTranslator | null = pagingOpt
-    ? createIdentityPaging({
-        ramBytes,
-        ...(typeof pagingOpt === 'object' ? pagingOpt : {}),
-      })
+    ? pagingMode === 'demand'
+      ? createDemandPager(pagingConfig, () => {
+          const pid = kernel.getCurrentPid();
+          return pid === null ? null : Number(pid);
+        })
+      : createIdentityPaging(pagingConfig)
     : null;
   const cpuMemory = translator ? createTranslatingMemory(memory, translator) : memory;
 

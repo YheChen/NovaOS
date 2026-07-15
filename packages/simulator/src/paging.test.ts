@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { asAddress } from '@novaos/shared';
 import { createMemory } from '@novaos/memory';
 import { compileToyC } from '@novaos/compiler';
-import { createIdentityPaging, createTranslatingMemory } from './paging';
+import { createIdentityPaging, createDemandPager, createTranslatingMemory } from './paging';
 import { createProgramRunner } from './runner';
 import { createNovaRuntime } from './runtime';
 import type { ProgramImage } from './program';
@@ -87,5 +87,50 @@ describe('CPU accesses routed through the MMU (end-to-end)', () => {
 
   it('reports null translation stats when paging is off', () => {
     expect(createNovaRuntime().getTranslationStats()).toBeNull();
+  });
+});
+
+describe('demand paging (per-process page tables)', () => {
+  it('faults a page in on first access, then it is resident', () => {
+    const pager = createDemandPager(
+      { ramBytes: 65536, pageSizeBytes: 256, tlbCapacity: 0 },
+      () => 1,
+    );
+    pager.translate(0x100); // page 1 → fault
+    pager.translate(0x1ff); // same page → resident, no fault
+    pager.translate(0x200); // page 2 → fault
+    expect(pager.stats().faults).toBe(2);
+  });
+
+  it('gives each process its own resident set (same VPN faults per process)', () => {
+    let pid = 1;
+    const pager = createDemandPager(
+      { ramBytes: 65536, pageSizeBytes: 256, tlbCapacity: 0 },
+      () => pid,
+    );
+    pager.translate(0x100); // process 1 faults page 1
+    pid = 2;
+    pager.translate(0x100); // process 2 faults the same page independently
+    expect(pager.stats().faults).toBe(2);
+  });
+
+  it('resolves to the identical physical address (integrates with the layout)', () => {
+    const pager = createDemandPager({ ramBytes: 65536, pageSizeBytes: 256 }, () => 1);
+    const r = pager.translate(0x1234);
+    expect(r.ok && r.value).toBe(0x1234);
+  });
+
+  it('runs a program end-to-end with real page faults and unchanged output', () => {
+    const runtime = createNovaRuntime({ paging: { mode: 'demand' } });
+    runtime.boot();
+    runtime.spawn(
+      'hello',
+      compile('int main() { int a = 5; int b = 10; print(a + b); return 0; }'),
+    );
+    runtime.run();
+    expect(runtime.getOutput().trim()).toBe('15');
+    const stats = runtime.getTranslationStats();
+    expect(stats).not.toBeNull();
+    expect(stats?.faults).toBeGreaterThan(0); // pages were demand-paged in
   });
 });
