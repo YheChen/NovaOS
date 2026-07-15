@@ -193,6 +193,19 @@ function lowerInstruction(
         if (ins.target !== null) emit(`  STORE R0, BP, ${tempOff(ins.target)}`, s);
         break;
       }
+      // IPC builtins: send(pipe, value) and receive(pipe) via the kernel pipes.
+      if (ins.callee === 'send') {
+        emit(`  LOAD R0, BP, ${tempOff(ins.args[0] as number)}`, s); // R0 = pipe
+        emit(`  LOAD R1, BP, ${tempOff(ins.args[1] as number)}`, s); // R1 = value
+        emit('  SYSCALL 10', s);
+        break;
+      }
+      if (ins.callee === 'receive') {
+        emit(`  LOAD R0, BP, ${tempOff(ins.args[0] as number)}`, s); // R0 = pipe
+        emit('  SYSCALL 11', s);
+        if (ins.target !== null) emit(`  STORE R0, BP, ${tempOff(ins.target)}`, s);
+        break;
+      }
       // Push arguments right-to-left; argument i is read by the callee at [BP+8+4i].
       for (let i = ins.args.length - 1; i >= 0; i -= 1) {
         emit(`  LOAD R0, BP, ${tempOff(ins.args[i] as number)}`, s);
