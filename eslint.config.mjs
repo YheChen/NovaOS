@@ -32,5 +32,13 @@ export default tseslint.config(
       'no-console': 'off',
     },
   },
+  {
+    // Plain-JS Node scripts (e.g. the favicon generator) sit outside the TS
+    // program, where `no-undef` is active, so declare the Node globals they use.
+    files: ['scripts/**/*.{js,mjs,cjs}'],
+    languageOptions: {
+      globals: { Buffer: 'readonly', console: 'readonly', process: 'readonly' },
+    },
+  },
   prettier,
 );
