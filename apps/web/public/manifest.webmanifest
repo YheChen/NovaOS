@@ -1,0 +1,15 @@
+{
+  "name": "NovaOS - deterministic operating-systems laboratory",
+  "short_name": "NovaOS",
+  "description": "Compile a program, run it on a custom virtual machine, and watch registers, memory, scheduling, and syscalls happen - then step execution backwards.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "icons": [
+    { "src": "icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "icon-512.png", "type": "image/png", "sizes": "512x512" },
+    { "src": "favicon.svg", "type": "image/svg+xml", "sizes": "any" }
+  ]
+}
