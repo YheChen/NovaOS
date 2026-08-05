@@ -25,6 +25,7 @@
     "test:e2e": "playwright test",
     "test:a11y": "playwright test --grep @a11y",
     "check:arch": "tsx scripts/check-architecture.ts",
+    "generate:favicon": "node scripts/generate-favicon.mjs",
     "validate": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm check:arch"
   },
   "devDependencies": {
