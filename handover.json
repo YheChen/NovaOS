@@ -1,496 +1,182 @@
 {
-  "schema": "novaos-handover/v1",
-  "generatedAtMilestone": "M7 complete (M5 Toy C compiler, M6 debugger, M7 workspace UI all merged)",
-  "purpose": "Context handover so a fresh session can continue building NovaOS milestone-by-milestone without re-deriving prior decisions. Read this first, then docs/specs and docs/adr.",
+  "schema": "novaos-handover/v2",
+  "generatedAt": "2026-07-15, after PR #56 (apple-touch icon + web manifest)",
+  "purpose": "Context handover so a fresh session can continue NovaOS without re-deriving prior decisions. Read this first, then README.md, docs/adr/, and the relevant docs/specs/ file.",
 
   "project": {
     "name": "NovaOS",
-    "oneLiner": "A browser-based, deterministic operating-systems laboratory: custom VM/CPU, microkernel, scheduler, virtual filesystem, shell/terminal, NovaASM assembler, (upcoming) Toy C compiler, debugger with time-travel replay, and a premium DevTools-style UI.",
+    "oneLiner": "A browser-based, deterministic operating-systems laboratory: custom 32-bit VM, microkernel, seven schedulers, virtual memory (MMU), concurrency + IPC, an inode VFS, a NovaASM assembler, a Toy C compiler, a time-travel debugger, and a DevTools-style web workspace.",
     "root": "/Users/yanzhenchen/Desktop/GitHub Projects/NovaOS",
-    "specs": "docs/specs/ (10 authoritative markdown docs, numbered 01-10). Read the relevant one before each milestone.",
-    "adrs": "docs/adr/ (0001 foundation+tooling, 0002 events package + canonical event shape, 0003 kernel/runtime responsibilities + kernel->cpu dep).",
-    "originalGoal": "Build M0 through v1.0 (M10), one milestone per turn, production quality, main always green."
+    "remote": "https://github.com/YheChen/NovaOS.git",
+    "liveDemo": "https://yhechen.github.io/NovaOS/ (GitHub Pages, built with VITE_BASE=/NovaOS/)",
+    "gitIdentity": "Local git user is 'NovaOS'. GitHub CLI (`gh`) is authenticated and is how PRs are created/merged.",
+    "license": "MIT (LICENSE at repo root, declared in package.json)",
+    "docs": "docs/specs/ (10 authoritative specs), docs/adr/ (7 ADRs), docs/orchestration/, docs/release-notes/, docs/contributing.md, docs/demo.md"
   },
 
   "currentState": {
     "git": {
       "branch": "main",
-      "head": "47c1cfa",
-      "headMessage": "feat(web): Milestone 7 — browser workspace UI (Vite React SPA) (#5)",
-      "workflow": "Each milestone: branch off main, implement+test, PR, wait for CI green, squash-merge, pull main. Merged PRs #3 (M5), #4 (M6), #5 (M7).",
+      "head": "45ba3ca",
+      "headMessage": "feat(web): apple-touch icon + web app manifest (#56)",
       "workingTree": "clean"
     },
-    "testCount": "229 unit tests (vitest) + 4 Playwright e2e",
-    "adrsAdded": "0004 (ISA extension + calling convention for Toy C), 0005 (workspace UI = Vite React SPA not Next.js)",
-    "milestonesComplete": [
-      "M0 foundation",
-      "M1 minimal VM",
-      "M2 kernel/process/scheduler",
-      "M3 filesystem/shell/terminal",
-      "M4 assembler/program-runner",
-      "M5 Toy C compiler (@novaos/compiler: lexer/parser/sema/IR/optimize/codegen/source-map; ISA extended in cpu+assembler per ADR-0004; .c wired into runner; hello.c seeded)",
-      "M6 debugger (@novaos/debugger: run control, stepping into/over/out, 5 breakpoint kinds, safe watch evaluator, call-stack via BP chain, timeline, time-travel replay)",
-      "M7 workspace UI (apps/web Vite+React SPA: editor, compile inspector, run output, live debugger panel; Playwright e2e drives built SPA)"
-    ],
-    "nextMilestone": "M8 agent orchestration (spec 08); then M9 testing/devops (spec 09); then M10 public v1.0 launch (spec 10). User wants M8-M10 done overnight.",
-    "tests": { "total": 174, "command": "pnpm test", "status": "all passing" },
-    "gates": "pnpm validate is green (format:check, lint, typecheck, test, build, check:arch all pass).",
-    "buildArtifacts": "tsup dist/ is gitignored; tests/build run from TS source via vitest/tsc."
+    "tests": "414 unit/integration tests across 63 files (vitest) + 12 Playwright e2e tests in tests/e2e/smoke.spec.ts",
+    "packages": 19,
+    "status": "v1.0 shipped long ago; everything since is additive feature work, all merged. There is NO work in progress and no half-finished branch. main is green.",
+    "backlogStatus": "The entire feature backlog the user asked for has been delivered. Do not assume there is a queued task - ask what to build next."
   },
 
   "howToWork": {
-    "process": "User says 'proceed with Milestone N'. Implement ONLY that milestone, fully, with real code + tests, keeping every gate green. Then report: files changed, APIs introduced, events introduced, tests added, commands run, deviations, next milestone.",
-    "doNotFabricate": "Never ship placeholder/stub implementations and call them done. Never claim output that wasn't actually produced. If a spec is ambiguous, make a documented engineering decision (add an ADR if architectural) and continue.",
-    "commitPolicy": "Commit/push ONLY when the user asks. The user has been committing between turns (e.g. 'm2-m4'). Do NOT auto-commit; offer a message in the report.",
-    "verifyEachMilestone": "After writing code: run pnpm typecheck, pnpm test, pnpm lint, pnpm build, pnpm check:arch, pnpm format then pnpm validate. Also run the milestone's acceptance demo via tsx and paste the real transcript.",
+    "prPerFeature": "THE ESTABLISHED FLOW, authorized by the user and used for every change since PR #35: create a branch, implement + test, commit, push, `gh pr create`, poll CI until green, `gh pr merge --squash --delete-branch`, then `git checkout main && git pull`. One feature per PR. main must be green at every point.",
+    "commitPolicy": "The per-feature PR flow above IS the standing authorization for commit/push/merge on feature work. Do not invent unrelated commits or push to main directly.",
+    "ciPolling": "`gh run watch` has timed out in this repo. Use a bounded poll loop instead: `gh run list --branch <b> --limit 1 --json status,conclusion`, sleeping ~15s, up to ~80 iterations. NOTE: zsh does NOT word-split unquoted variables, so `set -- $var` will not split; use explicit variables.",
+    "verifyBeforePR": "Run: pnpm exec prettier --write <changed files>, then pnpm lint, pnpm format:check, pnpm typecheck, pnpm check:arch, pnpm test, and pnpm --filter @novaos/web build. CI runs the same gates plus e2e.",
+    "doNotFabricate": "Never ship stubs and call them done; never claim output that was not produced. Verify visual/UI work by actually rendering it (the in-app browser and Read-on-PNG both work).",
     "scratchpad": "/private/tmp/claude-501/-Users-yanzhenchen-Desktop-GitHub-Projects-NovaOS/<session>/scratchpad"
-  },
-
-  "toolchain": {
-    "node": ">=20 (dev machine has v25.6)",
-    "packageManager": "pnpm@10.31.0 (workspaces via pnpm-workspace.yaml: packages/*, apps/*)",
-    "taskRunner": "Turborepo (turbo.json: only 'build' + 'typecheck' tasks; lint/test run centrally at root)",
-    "bundler": "tsup (esbuild), JS-only output (no .d.ts yet)",
-    "test": "Vitest (root vitest.config.ts; include packages/*/src/**/*.test.ts + tests/unit/**). Playwright skeleton in tests/e2e (page-free, no browser needed yet).",
-    "lint": "ESLint flat config (eslint.config.mjs) + typescript-eslint recommended + eslint-config-prettier. Run as `eslint .` at root. max-warnings 0.",
-    "format": "Prettier (.prettierrc.json: singleQuote, semi, trailingComma all, printWidth 100, 2-space). .prettierignore excludes docs/specs.",
-    "typecheck": "Single root `tsc --noEmit -p tsconfig.json` over the whole repo (no project references). tsconfig.base.json is strict + noUncheckedIndexedAccess + verbatimModuleSyntax + isolatedModules. exactOptionalPropertyTypes is OFF (so assigning undefined to optional fields is allowed).",
-    "moduleResolution": "Bundler; workspace packages resolve via pnpm symlinks + each package.json main/types -> ./src/index.ts. No tsconfig path aliases.",
-    "archCheck": "scripts/check-architecture.ts (run via tsx) enforces: only-root-imports (no @novaos/x/internal), declared-dependency, shared-has-no-workspace-deps, ui-is-domain-free, no-UI-in-domain, determinism (no Math.random/Date.now in deterministic pkgs), no eval, acyclic graph. ALL @novaos imports (incl. in tests) must be declared in that package's package.json deps/devDeps."
   },
 
   "commands": {
     "install": "pnpm install",
-    "validate": "pnpm validate",
-    "typecheck": "pnpm typecheck",
+    "validate": "pnpm validate (format:check + lint + typecheck + test + build + check:arch)",
+    "typecheck": "pnpm typecheck   (root tsc over the whole repo)",
     "test": "pnpm test",
+    "testOnePackage": "pnpm exec vitest run packages/<pkg>",
     "lint": "pnpm lint",
-    "build": "pnpm build",
+    "format": "pnpm format (writes) / pnpm format:check (verifies)",
     "arch": "pnpm check:arch",
-    "format": "pnpm format (writes); pnpm format:check (verifies)",
-    "runOnePackageTests": "pnpm exec vitest run packages/<pkg>",
-    "demoViaTsx": "pnpm --filter @novaos/<pkg> exec tsx -e \"(async()=>{ ... dynamic import('./src/index.ts') and '@novaos/*' ...})()\""
+    "build": "pnpm build   (turbo, all packages)",
+    "webDev": "pnpm --filter @novaos/web dev   (http://localhost:3000)",
+    "webBuild": "pnpm --filter @novaos/web build",
+    "webBuildForPages": "VITE_BASE=/NovaOS/ pnpm --filter @novaos/web build",
+    "e2e": "pnpm test:e2e",
+    "favicon": "pnpm generate:favicon   (regenerates all app icons from the brand palette)"
   },
 
   "invariants": [
-    "Simulator/domain core owns truth; UI only consumes serializable snapshots + typed events. UI never owns simulation truth.",
-    "Dependency direction strictly downward; package graph acyclic (enforced by check:arch).",
-    "Domain packages must NOT import React/DOM/Monaco/Next/Tailwind/Zustand. @novaos/ui must NOT import any domain package.",
+    "Domain core owns truth; the UI only consumes serializable snapshots + typed events and never owns simulation state.",
+    "Dependency direction is strictly downward and the package graph is acyclic (enforced by scripts/check-architecture.ts).",
+    "Domain packages must NOT import React/DOM/Monaco/Next/Zustand. @novaos/ui must NOT import any domain package.",
     "Every package exports only via src/index.ts. No deep imports.",
-    "Deterministic: no Date.now()/Math.random() in domain logic. Use injected SimulationClock (shared) + seeded DeterministicRandom (shared).",
-    "All meaningful state changes emit typed, serializable DomainEvents (source-tagged). Snapshots are serializable + versioned.",
-    "No eval/new Function for user programs; assembly/Toy C compile to NovaOS bytecode executed only by the VM interpreter.",
-    "Strict TS, no implicit any, no untyped public APIs, branded types for ids/addresses, discriminated unions for events/diagnostics."
+    "Deterministic: no Date.now()/Math.random() in domain packages. Use the injected SimulationClock and seeded DeterministicRandom from @novaos/shared.",
+    "No eval / new Function anywhere. User programs compile to bytecode run by the VM interpreter.",
+    "Strict TS: noUncheckedIndexedAccess, verbatimModuleSyntax, branded ids, discriminated unions.",
+    "A new package must be added to BOTH DOMAIN_PACKAGES and DETERMINISTIC_PACKAGES in scripts/check-architecture.ts, and any @novaos import (including in tests) must be declared in that package's package.json."
   ],
 
-  "packages": {
-    "@novaos/shared": {
-      "status": "implemented",
-      "purpose": "Zero-dependency primitives.",
-      "keyExports": [
-        "Brand",
-        "Result/ok/err/isOk/isErr/unwrap/map/mapErr",
-        "NovaError/novaError",
-        "Address/Byte/Word/SimTime + as*/create* (createByte etc.)",
-        "ProcessId/EventId/CorrelationId/SequenceNumber + processId/eventId/asSimTime/asSequence/asAddress",
-        "SourceSpan/SourceLocation/FileId",
-        "Diagnostic/diagnostic/hasErrors",
-        "SimulationClock/createSimulationClock",
-        "DeterministicRandom/createSeededRandom (Mulberry32, getState/setState/clone)",
-        "stableSort/sortedEntries",
-        "Versioned/stableStringify"
-      ],
-      "deps": [],
-      "notes": "createSimulationClock.tick rejects negative cycles."
+  "toolchain": {
+    "node": ">=20",
+    "packageManager": "pnpm@10.31.0 (workspaces: packages/*, apps/*)",
+    "taskRunner": "Turborepo (build + typecheck); lint/test run centrally at root",
+    "test": "Vitest. vitest.config.ts includes packages/*/src/**/*.test.{ts,tsx}, apps/*/src/**/*.test.{ts,tsx}, and tests/**/*.test.ts; excludes tests/e2e. Environment is node.",
+    "e2e": "Playwright against the built SPA (tests/e2e/smoke.spec.ts). Tags: @smoke, @a11y.",
+    "lint": "ESLint flat config (eslint.config.mjs). NOTE: scripts/**/*.{js,mjs,cjs} has an explicit block declaring Node globals (Buffer/console/process) because no-undef is active outside the TS program.",
+    "format": "Prettier: singleQuote, semi, trailingComma all, printWidth 100.",
+    "web": "Vite + React SPA in apps/web. vite.config.ts base comes from VITE_BASE (defaults '/'). Monaco editor is loaded via a local ?worker import."
+  },
+
+  "criticalGotchas": [
+    "ROOT TSC COMPILES .ts UNDER apps/*/src. Any browser-only file (DOM/vite types, JSX, or ?worker imports) MUST be named .tsx or the root typecheck fails. This bit us once with monaco-setup.ts -> monaco-setup.tsx. It applies to non-JSX files too (e.g. apps/web/src/persistence/*.tsx).",
+    "Vite rewrites root-relative asset URLs in index.html for the Pages base, but it copies public/ VERBATIM and does NOT rewrite URLs inside a .webmanifest. Manifest paths must be RELATIVE ('icon-192.png', start_url '.') or they 404 under /NovaOS/.",
+    "Prettier reformats files between turns; always `prettier --write` the files you changed before format:check. Expect 'file modified' notices from the linter.",
+    "zsh does not word-split unquoted variables (unlike bash). Loops doing `set -- $cfg` silently pass the whole string.",
+    "BSD grep on macOS treats \\| literally; use grep -E.",
+    "noUncheckedIndexedAccess is ON: indexing returns T|undefined; guard it.",
+    "Toy C stack frames are capped at 32 slots (MAX_SLOTS) because the LOAD/STORE displacement is a signed byte. Temps are not slot-reused, so a large array + many temps can overflow it. This is a documented v1 limitation.",
+    "Do not modify the kernel preemption path (shouldPreempt / handleTimerInterrupt) to add scheduler features. SRTF (quantum=1) and MLFQ (dynamic quantumTicks getter) both work by exploiting the existing synchronous `quantumTicks` read right after pickNext. If a new algorithm seems to need a kernel hook, the mechanism is probably wrong."
+  ],
+
+  "architecture": {
+    "layers": "apps/web (presentation) -> @novaos/simulator (runtime) -> domain packages -> @novaos/shared + @novaos/events",
+    "packages": {
+      "shared": "Branded ids, Result, seeded PRNG, injected clock, diagnostics, stableStringify",
+      "events": "Typed event bus + recorder",
+      "cpu": "32-bit ISA, register file, fetch/decode/execute, MemoryPort, syscall trap",
+      "memory": "Flat byte-addressable RAM, segments, first-fit allocator",
+      "kernel": "Boot, PCBs, timer interrupts, syscalls, process heap, sleeper queue, mutexes + wait channels, pipes, shared memory",
+      "scheduler": "FIFO, Round-Robin, Priority, Lottery, SJF, SRTF, MLFQ + a workload comparison simulator (workload.ts, compare.ts)",
+      "mmu": "Page tables, VA decode, demand paging, FIFO/Clock replacement, TLB",
+      "concurrency": "Deterministic mutex, semaphore, and a replayable lost-update race demo",
+      "filesystem": "Inode VFS, path resolver, permissions, snapshot/restore, persistence envelope (toPersisted/fromPersisted)",
+      "shell / terminal": "Shell builtins and a terminal session runtime",
+      "assembler": "NovaASM -> bytecode",
+      "compiler": "Toy C: lexer -> parser -> semantics -> IR -> optimizer -> codegen + source maps",
+      "debugger": "Stepping, breakpoints, watches, call stack, time-travel replay",
+      "simulator": "Wires the machine together; ticking, snapshots, opt-in MMU paging (paging.ts)",
+      "examples / tutorials": "Curated tested programs and guided lessons with verifiable checkpoints",
+      "testing / ui": "Shared test helpers; domain-agnostic UI primitives"
     },
-    "@novaos/events": {
-      "status": "implemented",
-      "purpose": "Typed event bus + recorder.",
-      "keyExports": [
-        "DomainEvent<TType,TPayload> {id,type,sequence,tick:SimTime,source,correlationId?,causationId?,payload}",
-        "EventInput (Omit id+sequence)",
-        "EventSource union",
-        "EventBus/createEventBus (publish assigns id 'evt-N' + monotonic sequence; subscribe(matcher,listener); drain)",
-        "EventRecorder/createEventRecorder (attach/getEvents/getEventsByType/clear)",
-        "matchers: allEvents/ofType/ofTypePrefix/ofSource/anyOf",
-        "serializeEvents/deserializeEvents (validates untrusted traces)"
-      ],
-      "deps": ["@novaos/shared"]
-    },
-    "@novaos/testing": {
-      "status": "implemented",
-      "purpose": "Shared test utilities.",
-      "keyExports": [
-        "createTestEventBus()->{bus,recorder}",
-        "expectEvents(events).toEqualSequence([...])/.toContainSequence([...])",
-        "assertEventSequence/assertEventSubsequence/eventTypes",
-        "seeded(seed) (re-export of createSeededRandom)"
-      ],
-      "deps": ["@novaos/events", "@novaos/shared"],
-      "consumedAs": "devDependency by other packages' tests"
-    },
-    "@novaos/cpu": {
-      "status": "implemented",
-      "purpose": "ISA + register file + step pipeline.",
-      "keyExports": [
-        "Opcode {NOP:0,MOV:1,ADD:2,PRINT:3,SYSCALL:4,HALT:255}",
-        "MNEMONICS, INSTRUCTION_SIZE=4, encodeInstruction(opcode,a,b,c), isOpcode",
-        "decode(word)->Result<DecodedInstruction>",
-        "HANDLERS (pure InstructionHandler per opcode; SYSCALL/HALT special-cased in step)",
-        "createRegisterFile/RegisterFileSnapshot {r0..r7,pc,sp,bp,ir,flags}, FlagsRegister {zero,negative,carry,overflow,interruptEnabled,exception}, INITIAL_FLAGS, GPR_NAMES, gprNameFromIndex, RegisterName",
-        "createCpu()->Cpu (reset/getRegisters/setRegister/getSnapshot/restoreSnapshot/step(ctx)); CpuStepResult {status:'ok'|'halted'|'fault', cycles, instruction, fault, syscall?}",
-        "VmExecutionContext {memory:MemoryPort, bus, clock, output:OutputSink, syscallTrap?:SyscallTrap}",
-        "SyscallTrap/SyscallTrapRequest/SyscallTrapResult ({kind:'return',returnValue}|{kind:'exit',code}|{kind:'fault',code,message})",
-        "VmFault/vmFault/VmFaultCode"
-      ],
-      "deps": ["@novaos/events", "@novaos/shared"],
-      "notes": "MOV is immediate-only (no register-to-register MOV). No JMP/CMP/LOAD/STORE yet. PRINT opcode prints a register directly (bare-VM convenience); kernel print is SYSCALL 0."
-    },
-    "@novaos/memory": {
-      "status": "implemented",
-      "purpose": "Byte-addressable RAM + first-fit allocator.",
-      "keyExports": [
-        "createMemory(sizeBytes=65536)->Memory (readByte/writeByte/readWord/writeWord little-endian + bounds-checked; load; snapshot/restore; reserve/release/getSegment/listSegments/memoryMap)",
-        "MemorySegment/MemorySegmentKind/MemoryPermissions/SegmentId/ReserveRequest/MemoryMapSnapshot/defaultPermissions",
-        "DEFAULT_RAM_BYTES, MemorySnapshot {sizeBytes,data:number[]}"
-      ],
-      "deps": ["@novaos/shared"],
-      "notes": "No memory events / permission-enforced access yet (deferred). Segment serialization not in MemorySnapshot yet."
-    },
-    "@novaos/scheduler": {
-      "status": "implemented",
-      "purpose": "Pluggable schedulers (kernel-free).",
-      "keyExports": [
-        "Scheduler interface (enqueue/remove/pickNext/requeue/has/size/snapshot/restore, id/name/quantumTicks)",
-        "createFifoScheduler() (quantumTicks=null, non-preemptive)",
-        "createRoundRobinScheduler({quantumTicks}) (preemptive, rotate on quantum)",
-        "SchedulableProcess {pid,priority,arrivalSequence}, SchedulingContext, SchedulerSnapshot"
-      ],
-      "deps": ["@novaos/shared"],
-      "notes": "Operates on minimal SchedulableProcess view (no PCB dep). Priority/SJF/Lottery deferred. Kernel emits scheduler.* events."
-    },
-    "@novaos/kernel": {
-      "status": "implemented",
-      "purpose": "Boot, process table, syscalls, interrupts, context switch.",
-      "keyExports": [
-        "createKernel({bus,clock,memory,scheduler,registerPort,output,random?,config?})->Kernel (boot/createProcess/dispatch/handleSyscall/handleTimerInterrupt/recordInstruction/shouldPreempt/terminateCurrent/faultCurrent/hasRunnable/getCurrentPid/getStatus/getProcess/getProcessTable/getSchedulerSnapshot/getMemoryMap/getSnapshot)",
-        "ProcessControlBlock/ProcessState/canTransition/isTerminal, ProcessMemoryMap, ExitReason, ProcessFault",
-        "createPidAllocator/KERNEL_PID(0)",
-        "Syscall {PRINT:0, EXIT:4}, SYSCALL_HANDLERS, syscallName",
-        "Interrupt/InterruptKind/timerInterrupt",
-        "RegisterPort {capture,load}",
-        "KernelSnapshot/KernelStatus/ProcessTableSnapshot/ProcessSummary, KernelFault"
-      ],
-      "deps": [
-        "@novaos/cpu",
-        "@novaos/events",
-        "@novaos/memory",
-        "@novaos/scheduler",
-        "@novaos/shared"
-      ],
-      "notes": "Kernel=policy, simulator=run loop. init(pid1)+shell(pid2) created as parked 'new' placeholders (no executable, not scheduled). print syscall reads R0; exit reads R0 as code."
-    },
-    "@novaos/filesystem": {
-      "status": "implemented",
-      "purpose": "Virtual filesystem.",
-      "keyExports": [
-        "createFileSystem({clock,bus?,home?})->FileSystem (stat/list/readFile/readText/writeFile/writeText/appendFile/createFile/createDirectory/remove/move/copy/resolve/snapshot/restore)",
-        "fsContext(cwd,user?), FsContext, DirectoryEntry, InodeStat, FileSystemSnapshot",
-        "inode model (Inode/FileInode/DirectoryInode/isFile/isDirectory), createContentStore",
-        "path: canonicalize/segmentsOf/basenameOf/dirnameOf/joinPath, PathResolutionContext/ResolvedPath",
-        "ids: InodeId/ContentRef/UserId/GroupId/Path/AbsolutePath + absolutePath/DEFAULT_USER/DEFAULT_HOME(/home/student)/ROOT_PATH",
-        "FilePermissions/formatPermissions, FsError/FsResult/fsError",
-        "FileSystemStorageProvider/createInMemoryStorageProvider (browser persistence skeleton)"
-      ],
-      "deps": ["@novaos/events", "@novaos/shared"],
-      "seedTree": "/ (home/student with README.txt+main.asm), bin, tmp, usr/examples",
-      "notes": "Owner read/write enforced; single-user 'student'. Symlinks/devices typed but not seeded. Recursive dir copy not supported. Real IndexedDB adapter deferred to apps/web."
-    },
-    "@novaos/shell": {
-      "status": "implemented",
-      "purpose": "Shell lexer/parser/registry/builtins (kernel-free).",
-      "keyExports": [
-        "createShell()->Shell (execute(input,ctx)->ShellExecutionResult; complete(input,cursor,ctx); registry)",
-        "lex/parse + AST (CommandLineNode/CommandNode/ShellArgument)",
-        "createCommandRegistry/parseArgs/ShellCommand/registerBuiltins",
-        "ShellContext {user,cwd,home,filesystem,clock,system?:SystemInspector,runner?:ProgramRunner,bus?,history?}",
-        "OutputLine {kind:'stdout'|'stderr'|'system'|'diagnostic',text} + stdout/stderr/systemLine/diagnosticLine",
-        "SystemInspector + createStaticSystemInspector (kernel snapshots view)",
-        "ProgramRunner + CompileReport/RunReport/RunnerDiagnostic (compile/run; backed by simulator runner)",
-        "complete/CompletionResult/CompletionItem, editDistance/suggest"
-      ],
-      "builtins": [
-        "pwd",
-        "cd",
-        "ls",
-        "tree",
-        "mkdir",
-        "touch",
-        "cat",
-        "rm",
-        "cp",
-        "mv",
-        "echo",
-        "clear",
-        "help",
-        "history",
-        "ps",
-        "kill",
-        "mem",
-        "cpu",
-        "sysinfo",
-        "compile",
-        "run"
-      ],
-      "deps": ["@novaos/filesystem", "@novaos/events", "@novaos/shared"],
-      "notes": "Shell is decoupled from kernel/assembler via injected SystemInspector + ProgramRunner. Pipes/redirects/semicolons lexed but rejected. Execution is synchronous."
-    },
-    "@novaos/terminal": {
-      "status": "implemented",
-      "purpose": "Headless terminal session runtime.",
-      "keyExports": [
-        "createTerminalSession({shell,filesystem,clock,system?,runner?,bus?,user?,home?,cwd?,id?})->TerminalSession (setInput/insert/backspace/moveCursor/submit/historyPrev/historyNext/complete/interrupt/clear/getOutput/getHistory/getCwd/prompt)",
-        "TerminalOutputChunk {id,kind,text,tick}, TerminalChunkKind"
-      ],
-      "deps": ["@novaos/shell", "@novaos/filesystem", "@novaos/events", "@novaos/shared"],
-      "devDeps": [
-        "@novaos/cpu",
-        "@novaos/kernel",
-        "@novaos/memory",
-        "@novaos/scheduler",
-        "@novaos/simulator",
-        "@novaos/assembler",
-        "@novaos/testing"
-      ],
-      "notes": "Acceptance tests boot a real kernel and wire its snapshots into a SystemInspector to prove the shell reads real kernel state."
-    },
-    "@novaos/assembler": {
-      "status": "implemented",
-      "purpose": "NovaASM -> bytecode.",
-      "keyExports": [
-        "assemble(source,{fileName?})->AssembleResult {success,bytecode,diagnostics}",
-        "tokenize/parse + AST (AssemblyStatement/AssemblyOperand)",
-        "INSTRUCTION_SPECS/KNOWN_MNEMONICS/parseRegister/parseImmediate",
-        "BytecodeObject {magic:'NOVA',version:1,entryPoint,instructions:EncodedInstruction[],code:Uint8Array(LE),data,symbols,sourceMap,createdBy,sourceLanguage:'assembly'}, toCodeBytes",
-        "SourceMap/SourceMapEntry/lineForAddress/addressForLine"
-      ],
-      "deps": ["@novaos/cpu", "@novaos/shared"],
-      "notes": "Two-pass. entryPoint = byte offset of first .global symbol. Memory/label operands parsed but rejected (no LOAD/STORE/JMP). Deterministic encoding (golden-tested)."
-    },
-    "@novaos/simulator": {
-      "status": "implemented",
-      "purpose": "Runtime orchestration + program runner.",
-      "keyExports": [
-        "createVirtualMachine(options) (bare M1 VM: step/run/getOutput/getEvents/getRegisters/getSnapshot)",
-        "buildProgram(instructions,entryPoint?)->ProgramImage {entryPoint,code}",
-        "createBufferedOutput()",
-        "createNovaRuntime({ramBytes?,scheduler?:'fifo'|'round-robin',quantumTicks?,seed?,maxSteps?})->NovaRuntime (boot/spawn(name,program,opts)->pid/step/run/getKernel/getStatus/getOutput/getOutputLines/getEvents/getProcessTable/getSchedulerSnapshot/getMemoryMap/getSnapshot)",
-        "createProgramRunner()->ProgramRunner (compile/run; assemble + boot fresh NovaRuntime + spawn + run + capture output)",
-        "RuntimeEventType/runtime event builders (programLoaded/halted/faulted/stepLimit)"
-      ],
-      "deps": [
-        "@novaos/assembler",
-        "@novaos/cpu",
-        "@novaos/events",
-        "@novaos/kernel",
-        "@novaos/memory",
-        "@novaos/scheduler",
-        "@novaos/shared"
-      ],
-      "notes": "ProgramRunner shape duplicated structurally with shell's ProgramRunner to avoid simulator->shell cycle."
-    },
-    "@novaos/compiler": {
-      "status": "STUB (scaffold only)",
-      "purpose": "Toy C compiler — IMPLEMENT IN M5.",
-      "deps": []
-    },
-    "@novaos/debugger": {
-      "status": "STUB (scaffold only)",
-      "purpose": "Debugger/timeline/replay — IMPLEMENT IN M6.",
-      "deps": []
-    },
-    "@novaos/ui": {
-      "status": "STUB (scaffold only)",
-      "purpose": "Design system — IMPLEMENT IN M7. Must stay domain-free.",
-      "deps": []
-    },
-    "@novaos/examples": {
-      "status": "STUB (scaffold only)",
-      "purpose": "Example programs/tutorials data — M8.",
-      "deps": []
-    },
-    "apps/web": {
-      "status": "STUB (placeholder, NOT a Next.js app yet)",
-      "purpose": "Browser workspace UI — IMPLEMENT IN M7 (Next.js+React+Monaco+Tailwind+Zustand). Only place allowed to bridge React with domain types.",
-      "deps": []
-    }
+    "webViews": "apps/web/src/App.tsx holds a `view` union ('workspace' | 'concurrency' | 'scheduler' | 'paging' | 'files' | 'tutorials'). Each alt view is a full-width component rendered above the 3-column .layout, which is hidden with display:none when view !== 'workspace'. Follow this exact pattern for any new view."
   },
 
   "isaReference": {
-    "instructionFormat": "Fixed 32-bit word: [OPCODE(8) | A(8) | B(8) | C(8)]. Stored little-endian. encodeInstruction = ((op<<24)|(a<<16)|(b<<8)|c)>>>0.",
-    "opcodes": { "NOP": 0, "MOV": 1, "ADD": 2, "PRINT": 3, "SYSCALL": 4, "HALT": 255 },
-    "operandMapping": {
-      "MOV": "MOV Rd, imm8 -> a=d,b=imm (immediate-only; NO reg-reg MOV)",
-      "ADD": "ADD Rd,Rs,Rt -> a=d,b=s,c=t",
-      "PRINT": "PRINT Rs -> a=s",
-      "SYSCALL": "SYSCALL id -> a=id",
-      "HALT/NOP": "no operands"
-    },
-    "syscalls": {
-      "0": "print: writes R0 as decimal line to OutputSink, returns 0 in R0",
-      "4": "exit: terminates current process with code = R0"
-    },
-    "registers": "8 GPR r0-r7 + pc/sp/bp/ir + flags. Stored unsigned 32-bit.",
-    "missingFeaturesToAddLater": "register-to-register MOV, CMP, JMP/conditional branches, LOAD/STORE memory ops, CALL/RET/PUSH/POP stack ops. M5 codegen will likely NEED these (functions/if/while). DECIDE in M5 whether to extend the ISA (cpu+assembler) before/with the compiler."
+    "instructionFormat": "Fixed 32-bit word: [OPCODE(8) | A(8) | B(8) | C(8)], little-endian. encodeInstruction = ((op<<24)|(a<<16)|(b<<8)|c)>>>0.",
+    "opcodes": "NOP 0, MOV 1, ADD 2, PRINT 3, SYSCALL 4, MOVR 5, LDI 6, SUB 7, MUL 8, DIV 9, MOD 10, NEG 11, NOT 12, CEQ 13, CNE 14, CLT 15, CLE 16, CGT 17, CGE 18, AND 19, OR 20, JMP 21, JZ 22, JNZ 23, PUSH 24, POP 25, CALL 26, RET 27, LOAD 28, STORE 29, LDIH 30, BAND 31, BOR 32, BXOR 33, SHL 34, SHR 35, HALT 255",
+    "syscalls": "0 print, 1 malloc, 2 free, 4 exit, 5 sleep, 6 yield, 7 lock, 8 unlock, 9 shared, 10 send, 11 receive",
+    "callingConvention": "ADR-0004. Stack-based codegen; args pushed right-to-left, callee reads at [BP+8+4i].",
+    "registers": "8 GPR r0-r7 + pc/sp/bp/ir + flags, stored unsigned 32-bit."
   },
 
-  "eventCatalog": {
-    "cpu": [
-      "cpu.instruction.fetched",
-      "cpu.instruction.executed",
-      "cpu.register.changed",
-      "cpu.flags.changed",
-      "cpu.output",
-      "cpu.halted",
-      "cpu.fault.raised"
+  "toyCLanguage": {
+    "types": "int, bool",
+    "features": "functions (incl. recursion), arithmetic with correct precedence, bitwise & | ^ << >>, if/else, while, do/while, for (a real ForStatement node), break/continue, compound assignment, short-circuit && ||, fixed-size arrays (int a[N], a[i])",
+    "builtins": "print, malloc, free, peek, poke, sleep, yield, lock, unlock, shared, send, receive",
+    "notSupported": "globals (ir/unsupported-global), pointers, structs, strings, else-if chains are just nested if/else"
+  },
+
+  "recentWork": {
+    "summary": "22 PRs merged (#35-#56), all squash-merged with CI green.",
+    "prs": [
+      "#35 fixed-size arrays in Toy C",
+      "#36 concurrency package: mutex, semaphore, replayable race demo",
+      "#37 SJF + SRTF + the optional SchedulableProcess.estimatedBurst interface",
+      "#38 MLFQ with per-level quantum (quantumTicks getter) + priority boost",
+      "#39 scheduler-comparison lab (metrics table + SVG Gantt)",
+      "#40 @novaos/mmu: page tables, demand paging, FIFO/Clock, TLB",
+      "#41 paging visualizer web view",
+      "#42 filesystem persistence envelope (pure toPersisted/fromPersisted)",
+      "#43 VFS -> IndexedDB persistence + Files lab",
+      "#44 @novaos/tutorials dataset + runner (capstone)",
+      "#45 virtual-memory tutorial (T5) + mmu-translate checkpoint kind",
+      "#46 opt-in identity MMU on the CPU path",
+      "#47 README professional rewrite",
+      "#48 MIT LICENSE",
+      "#49 blocking syscalls: sleep, yield, sleeper wait queue",
+      "#50 mutex lock/unlock syscalls + shared memory (real two-process races)",
+      "#51 IPC message-passing pipes (send/receive)",
+      "#52 demand paging on the CPU path + per-process page tables",
+      "#53 break/continue + real for-loop lowering",
+      "#54 do/while loops",
+      "#55 favicon (generated from the brand palette)",
+      "#56 apple-touch icon + web app manifest"
     ],
-    "runtime": [
-      "runtime.program.loaded",
-      "runtime.halted",
-      "runtime.faulted",
-      "runtime.step-limit"
+    "keyMechanisms": {
+      "blocking": "SyscallTrapResult gained 'block' and 'yield'; CpuStepStatus gained 'blocked'. The kernel records a pendingDeschedule during the syscall and the runtime calls kernel.commitDeschedule() after the CPU advanced PC, so the process resumes on the NEXT instruction. The runtime idle-advances the clock to nextWakeTick() when nothing is ready but something sleeps.",
+      "concurrency": "Mutexes are keyed by id with per-channel FIFO wait queues. unlock() hands the lock DIRECTLY to the next waiter; terminateProcess releases held locks so a buggy exit cannot deadlock.",
+      "ipc": "Pipes buffer words; a send to a pipe with a blocked receiver writes the value straight into that receiver's R0 and wakes it. Pipe channels use PIPE_CHANNEL_OFFSET (1_000_000) so they never collide with mutex channels.",
+      "paging": "simulator/src/paging.ts wraps the CPU's MemoryPort. mode 'identity' pre-maps everything; mode 'demand' gives each pid its own resident set, faults pages in, and flushes the TLB on address-space switch. Frames are identity-mapped so it integrates with the kernel's physical layout without a relocation rewrite."
+    }
+  },
+
+  "openWorkAndIdeas": {
+    "inProgress": "Nothing. main is clean and green.",
+    "knownLimitations": [
+      "Full virtual-memory ISOLATION is still not done: the kernel assigns physical PC/SP and demand paging is identity-mapped. Real isolation (non-identity relocation, virtual PC/SP, a backing store) is a multi-PR epic and is the honest remaining slice.",
+      "No maskable PWA icon variant (Android wants ~40% safe-zone padding, needing a third artwork variant).",
+      "docs/media/demo.gif is referenced by a commented-out block in README.md but does not exist; recording it is the highest-leverage polish item.",
+      "Toy C has no globals, pointers, structs, or strings.",
+      "Codegen is stack-based with no register allocation."
     ],
-    "kernel": [
-      "kernel.boot.started",
-      "kernel.boot.stage.completed",
-      "kernel.boot.completed",
-      "kernel.process.created",
-      "kernel.process.state.changed",
-      "kernel.process.terminated",
-      "kernel.process.output",
-      "kernel.context.switch",
-      "kernel.syscall.invoked",
-      "kernel.syscall.completed",
-      "kernel.syscall.failed",
-      "kernel.interrupt.raised",
-      "kernel.interrupt.handled",
-      "kernel.fault"
-    ],
-    "scheduler": [
-      "scheduler.initialized",
-      "scheduler.process.enqueued",
-      "scheduler.process.removed",
-      "scheduler.picked"
-    ],
-    "filesystem": [
-      "filesystem.file.created",
-      "filesystem.file.read",
-      "filesystem.file.written",
-      "filesystem.file.deleted",
-      "filesystem.directory.created",
-      "filesystem.directory.deleted",
-      "filesystem.moved",
-      "filesystem.copied"
-    ],
-    "shell": [
-      "shell.command.started",
-      "shell.command.finished",
-      "shell.command.failed",
-      "shell.cwd.changed"
-    ],
-    "terminal": [
-      "terminal.command.submitted",
-      "terminal.output.appended",
-      "terminal.cleared",
-      "terminal.interrupted",
-      "terminal.autocomplete.requested"
+    "candidateNextSteps": [
+      "Record the demo GIF and enable the README hero image.",
+      "Register allocation (linear scan) so the Optimizer explorer shows real before/after wins.",
+      "More Toy C: else-if sugar, globals, pointers, structs, strings.",
+      "Full virtual-memory isolation (the epic above).",
+      "Record-and-share a replay session (leans on determinism + the existing permalink/IndexedDB infra).",
+      "Benchmark harness + CI perf regression guard; coverage badge.",
+      "Curriculum mode: order the 5 tutorials into a course with progress persisted to IndexedDB."
     ]
   },
 
-  "keyDecisions": [
-    "ADR-0002: events is its own package (@novaos/events) depending only on shared. Canonical DomainEvent uses tick:SimTime (reconciles spec's tick vs timestamp). Bus assigns id ('evt-N') + monotonic sequence on publish.",
-    "ADR-0003: kernel=policy, simulator=run loop. SYSCALL opcode + SyscallTrap (defined in cpu, implemented by kernel). kernel depends on cpu for RegisterFileSnapshot + trap types (acyclic). Kernel saves/restores registers via injected RegisterPort. Scheduler stays kernel-free via SchedulableProcess view. init/shell parked as 'new'.",
-    "print syscall (and PRINT opcode) read/print R0 per VM spec section 22 and M1/M2 ABI. M2 demo uses R0. (See deviations below re: M4 acceptance file.)",
-    "Shell decoupled from kernel and assembler via injected SystemInspector and ProgramRunner interfaces (defined in shell/context.ts; impls live in the runtime). createStaticSystemInspector for standalone/tests.",
-    "Single root tsc for typecheck (no project references). tsup JS-only builds. exactOptionalPropertyTypes OFF."
-  ],
-
-  "deviationsAndGotchas": [
-    "M4 print/R2 vs R0: The VM spec's toolchain demo file does `ADD R2,R0,R1` then `SYSCALL 0` expecting 15, but print reads R0 and there is NO register-to-register MOV in the ISA, so that exact file would print 5. The runnable hello.asm targets R0 (`ADD R0, R0, R1`) to print 15; the assembler golden test still assembles the verbatim `ADD R2` file correctly. Documented deviation.",
-    "TOOLING GREMLIN: writing a literal control/space char inside a regex char class via the Write/Edit tools can corrupt it (a typed space became a NUL byte once). Avoid control-char regex literals; use charCodeAt scans. ESLint also forbids control chars in regex (no-control-regex). See filesystem/src/path.ts hasInvalidChars for the pattern.",
-    "BSD grep on macOS treats \\| literally (not alternation). Use `grep -E` for alternation.",
-    "Prettier reformats hand-written files; ALWAYS run `pnpm format` before `pnpm format:check`/validate, or format:check fails. Linter/formatter edits files between turns (expect 'file modified' notices).",
-    "Stub package files were created by a shell script in M0; you must Read them before Write/Edit (harness requirement).",
-    "noUncheckedIndexedAccess is ON: array/tuple index access returns T|undefined; guard or use charAt/?? .",
-    "When adding a package or cross-package import, update that package.json deps/devDeps or check:arch fails (it validates declared deps for ALL imports incl. tests)."
-  ],
-
-  "nextMilestone": {
-    "id": "M5",
-    "title": "Toy C Compiler",
-    "specs": [
-      "docs/specs/06-compiler-debugger-v2.md",
-      "docs/specs/09-testing-devops-v2.md",
-      "docs/specs/10-roadmap-v2.md"
-    ],
-    "targetPackage": "@novaos/compiler (currently a stub)",
-    "deliverables": [
-      "lexer",
-      "parser",
-      "immutable AST with source spans",
-      "semantic analyzer + symbol table + type checker",
-      "diagnostics",
-      "IR model + IR generation",
-      "optimizations: constant folding, dead code elimination, copy propagation",
-      "assembly generation (Toy C -> NovaASM)",
-      "source maps connecting Toy C -> assembly/bytecode",
-      "compiler inspector artifact snapshots (tokens/AST/IR/assembly/bytecode/diagnostics)",
-      "golden tests for tokens/AST/IR/assembly/diagnostics/source-maps",
-      "shell `compile <file.c>` and `run <file.c>`"
-    ],
-    "language": [
-      "int",
-      "bool",
-      "void",
-      "variables",
-      "assignment",
-      "arithmetic",
-      "comparison",
-      "if/else",
-      "while",
-      "functions",
-      "return",
-      "function calls",
-      "print"
-    ],
-    "exclude": [
-      "arrays",
-      "pointers",
-      "structs",
-      "preprocessor",
-      "includes",
-      "full C",
-      "advanced optimizer features",
-      "debugger UI"
-    ],
-    "acceptanceProgram": "int main() {\\n  int a = 5;\\n  int b = 10;\\n  int c = a + b;\\n  print(c);\\n  return 0;\\n}",
-    "acceptanceFlow": ["compile hello.c", "run hello.c"],
-    "expectedOutput": "15",
-    "criticalDesignNote": "The current ISA lacks reg-reg MOV, CMP, branches (JMP/JE/JNE/JLT/JGT), and stack ops (CALL/RET/PUSH/POP) that real codegen for if/while/functions needs. BEFORE/WITH the compiler you will likely need to EXTEND the ISA in @novaos/cpu (new opcodes + handlers + tests) AND @novaos/assembler (specs + label-ref operands for branch targets, which are already parsed but currently rejected). This is the biggest M5 design decision — extend cpu+assembler first, keep all existing tests green, then build the compiler on top. Document any ISA change in an ADR.",
-    "wiring": "Extend @novaos/simulator createProgramRunner to dispatch .c files to the compiler (compile -> NovaASM -> assemble -> bytecode -> run). The shell compile/run commands already dispatch by extension via the runner. The ProgramRunner.compile/run already exist; add a '.c' branch.",
-    "callingConvention": "Spec 06 section 15: R0 return value; first args in R0-R3 else stack; BP/SP frames; prologue PUSH BP; MOV BP,SP; epilogue MOV SP,BP; POP BP; RET. Adjust to actual ISA; document in ADR if different.",
-    "verify": "pnpm validate green; tsx demo running `compile hello.c` then `run hello.c` -> 15."
-  },
-
-  "remainingMilestones": {
-    "M6": "Debugger, Timeline, Replay (@novaos/debugger). Session state machine; run/pause/continue/stop/restart; step instruction/source/into/over/out; line+instruction breakpoints; register/memory watches + safe watch parser; call stack; debugger snapshots+events; event timeline + correlation grouping; snapshot-interval + deterministic replay engine (rewind/forward/jump); source-map integration (line<->address). Uses cpu.getSnapshot/restoreSnapshot + the event recorder + assembler/compiler source maps. Specs 03/04/06/09/10.",
-    "M7": "Full Workspace UI (apps/web as real Next.js+React+Monaco+Tailwind+shadcn+Zustand; @novaos/ui design system). BIG/multi-turn, different toolchain. Design tokens + primitives; app shell/top bar/resizable panels/layout persistence; command palette; settings; dark/light/high-contrast; reduced motion. Feature UI consuming REAL snapshots/events: file explorer, Monaco editor, terminal UI, register/flags viewer, process table, scheduler viz, kernel dashboard, virtualized memory grid, stack/heap viewers, debugger panels, timeline UI, compiler inspector. E2E (Playwright) flagship flow + a11y smoke. NO domain truth in React state. Will need a worker/runtime-client to drive the simulator. Specs 07/08/09/10.",
-    "M8": "Tutorials, Examples, Documentation. Tutorial engine+overlay+step model+validation; 8 tutorials; example gallery + metadata under /usr/examples; ~12 example programs; full docs set (README/quickstart/guides/glossary/known-limitations). Education+polish only, no new architecture. Specs 07/09/10.",
-    "M9": "Release Candidate. Stabilization/bugfix/a11y/perf/docs. Full validation pass; hide unstable non-MVP behind flags; polish empty/error/loading states; verify deploy/reset/import-export; screenshots; release notes; go/no-go. Specs 09/10.",
-    "M10": "Public v1.0 Launch. Final build/deploy, polished README, screenshots/GIFs, architecture diagrams, demo script, release notes, known limitations, contributing/issue/PR templates, license, GitHub polish, final validation report. Specs all."
-  },
-
-  "flagshipDemo": "open app -> boot -> open Toy C/asm example -> compile -> inspect compiler artifacts -> run as process -> terminal output -> inspect registers/memory/process table/scheduler/syscalls/timeline -> debug session -> breakpoint -> step -> watch registers/memory change -> rewind timeline.",
-
-  "resumePrompt": "Read handover.json, then docs/specs/06-compiler-debugger-v2.md. Proceed with Milestone 5: implement the Toy C compiler in @novaos/compiler (lexer/parser/AST/semantic+types/IR/opt passes/codegen/source maps/compiler-inspector snapshots + golden tests), extend the ISA in @novaos/cpu + @novaos/assembler as needed for if/while/functions (document any ISA change as an ADR), wire .c into @novaos/simulator's createProgramRunner so `compile hello.c`/`run hello.c` work, keep main green (pnpm validate), and report in the standard format. The acceptance program must print 15."
+  "resumePrompt": "You are continuing NovaOS (see handover.json). v1.0 and a large additive feature program are complete; main is green at 45ba3ca with 414 unit tests + 12 e2e. There is no work in progress. Read README.md and this file, then ASK the user what to build next rather than assuming a queued task. When you do build something, follow the established flow: one feature per PR, branch -> implement + test -> prettier/lint/typecheck/arch/test/web-build -> gh pr create -> poll CI green -> squash-merge -> pull main."
 }
