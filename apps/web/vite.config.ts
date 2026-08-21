@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 // NovaOS workspace SPA. Fully client-side; no server tier.
-// `VITE_BASE` lets the Pages deploy serve under a repo subpath (e.g. /NovaOS/).
+// `VITE_BASE` lets a deploy serve the app under a subpath (e.g. /NovaOS/).
 export default defineConfig({
   base: process.env.VITE_BASE ?? '/',
   plugins: [react()],
