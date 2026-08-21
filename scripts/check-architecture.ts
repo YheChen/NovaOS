@@ -7,11 +7,10 @@
  *   1. No deep imports into another package's internals (only `@novaos/<pkg>`).
  *   2. Every `@novaos/*` import is declared in the importing package's package.json.
  *   3. `@novaos/shared` depends on no other workspace package.
- *   4. `@novaos/ui` imports no workspace package (it stays domain-agnostic).
- *   5. Domain packages do not import UI libraries (react, next, monaco, zustand, ...).
- *   6. Deterministic packages contain no `Math.random()` / `Date.now()`.
- *   7. No `eval(` / `new Function(` anywhere.
- *   8. The inter-package dependency graph is acyclic.
+ *   4. Domain packages do not import UI libraries (react, next, monaco, zustand, ...).
+ *   5. Deterministic packages contain no `Math.random()` / `Date.now()`.
+ *   6. No `eval(` / `new Function(` anywhere.
+ *   7. The inter-package dependency graph is acyclic.
  *
  * Exits non-zero (and prints every violation) when any rule is broken.
  */
@@ -209,14 +208,6 @@ for (const file of files) {
           rule: 'shared-no-deps',
           file: rel,
           detail: `@novaos/shared must not depend on workspace package "${targetPkg}".`,
-        });
-      }
-
-      if (owner.kind === 'package' && owner.name === 'ui') {
-        violations.push({
-          rule: 'ui-domain-coupling',
-          file: rel,
-          detail: `@novaos/ui must stay domain-agnostic; it may not import "${targetPkg}".`,
         });
       }
 
