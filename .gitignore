@@ -15,3 +15,6 @@ test-results
 .vscode/*
 !.vscode/extensions.json
 .claude/
+
+# Internal session handover; kept locally, not published.
+handover.json

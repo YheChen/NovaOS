@@ -2,11 +2,7 @@
 
 > Toy C pipeline: lexer, parser, semantic analysis, IR, codegen.
 
-**Status:** scaffold (Milestone 0). Implementation begins in Milestone 5.
-
-See [`docs/package-readme-template.md`](../../docs/package-readme-template.md) for the
-section structure this README adopts once implemented, and
-[`docs/specs/`](../../docs/specs) for the authoritative specification.
+See [`docs/specs/`](../../docs/specs) for the authoritative specification.
 
 ## Dependency Rules
 

@@ -2,11 +2,11 @@
 
 > Reusable, domain-agnostic design-system components.
 
-**Status:** scaffold (Milestone 0). Implementation begins in Milestone 7.
+**Status:** unused scaffold. The workspace's components live in `apps/web`;
+this package is kept only so the architecture check can assert that a
+domain-agnostic UI package imports no domain package.
 
-See [`docs/package-readme-template.md`](../../docs/package-readme-template.md) for the
-section structure this README adopts once implemented, and
-[`docs/specs/`](../../docs/specs) for the authoritative specification.
+See [`docs/specs/`](../../docs/specs) for the authoritative specification.
 
 ## Dependency Rules
 

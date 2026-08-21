@@ -1564,23 +1564,7 @@ Do not implement advanced optimizations before debugging and source maps work.
 
 ---
 
-# 37. Agent Ownership Recommendations
-
-Relevant agents:
-
-- Agent 30: Toy C Lexer Parser
-- Agent 31: Semantic Analysis
-- Agent 32: IR
-- Agent 33: Optimization
-- Agent 34: Assembly Generation
-- Agent 35: Assembler
-- Agent 36: Source Map
-- Agent 37: Debugger Core
-- Agent 38: Breakpoints and Watches
-- Agent 39: Timeline and Replay
-- Agent 42: Editor
-- Agent 46: Debugger UI
-- Agent 48: Testing and QA
+# 37. Suggested Implementation Sequencing
 
 Suggested sequencing:
 

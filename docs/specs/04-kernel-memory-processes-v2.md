@@ -1456,20 +1456,7 @@ Do not build advanced syscalls before the basic process lifecycle works.
 
 ---
 
-# 37. Agent Ownership Recommendations
-
-Recommended agents from `08-agent-orchestration.md`:
-
-- Agent 16: Memory Core
-- Agent 17: Allocator
-- Agent 18: Stack and Heap
-- Agent 19: Kernel Core
-- Agent 20: Process Manager
-- Agent 21: Scheduler
-- Agent 22: Syscall
-- Agent 23: Interrupt
-- Agent 39: Timeline and Replay
-- Agent 48: Testing and QA
+# 37. Suggested Implementation Sequencing
 
 Suggested sequencing:
 
