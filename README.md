@@ -138,15 +138,15 @@ runtime _and_ rebuilds it — that double arrow is where time travel lives.
 
 Three invariants hold the system together, and all three are **mechanically
 enforced** by [`scripts/check-architecture.ts`](scripts/check-architecture.ts)
-in CI (212 source files scanned on every push):
+in CI (211 source files scanned on every push):
 
 1. **The dependency graph points downward and is acyclic.** Every package exposes
    its API through a single `src/index.ts`; deep imports into another package's
    internals fail the build, as does any `@novaos/*` import not declared in that
    package's `package.json`.
 2. **The domain core is UI-free.** No React, DOM, Monaco, or Zustand below the
-   presentation layer; `@novaos/ui` imports no domain package. The UI owns no
-   simulation state — it renders serializable snapshots and typed events.
+   presentation layer. The UI owns no simulation state — it renders serializable
+   snapshots and typed events.
 3. **The domain core is deterministic.** `Math.random()` and `Date.now()` are
    rejected in all 15 deterministic packages, and `eval` / `new Function` are
    rejected everywhere in the repo. Randomness comes from a seeded PRNG and time
@@ -434,7 +434,7 @@ request.
 | Integration     | Cross-package flows through public APIs only — compiler → VM prints `15`; a line breakpoint resolved through the source map pauses on the right line; filesystem → shell → terminal                                                                                                                                                                                                                   | `pnpm test:integration` |
 | Golden          | Byte-exact toolchain output: a known NovaASM program must encode to exact little-endian bytes; identical source must produce identical bytecode; the calling-convention prologue/epilogue and IR shape are pinned                                                                                                                                                                                     | `pnpm test:golden`      |
 | Replay          | The determinism guarantee itself: two independent runs must agree on output, event count, _and_ the ordered event-type sequence; sequence numbers must be strictly monotonic                                                                                                                                                                                                                          | `pnpm test:replay`      |
-| Architecture    | The three invariants above, statically, over 212 source files                                                                                                                                                                                                                                                                                                                                         | `pnpm check:arch`       |
+| Architecture    | The three invariants above, statically, over 211 source files                                                                                                                                                                                                                                                                                                                                         | `pnpm check:arch`       |
 | End-to-end      | The real SPA in Chromium: compile-and-run prints `15`, the inspector shows stages, a debug session starts paused at entry, the race reproduces, the Gantt renders, an address translates, IndexedDB survives a reload, tutorial checkpoints verify. 2 tests are keyboard-accessibility assertions                                                                                                     | `pnpm test:e2e`         |
 
 The tutorial checkpoints double as a cross-subsystem oracle: they assert on real
@@ -537,7 +537,7 @@ pnpm test:e2e                            # Playwright against the built SPA
 
 ## Repository layout
 
-18 implemented workspace packages plus one app, strict TypeScript throughout
+18 workspace packages plus one app, strict TypeScript throughout
 (`noUncheckedIndexedAccess`, `verbatimModuleSyntax`, branded ids, discriminated
 unions), zero runtime dependencies in the domain core.
 
@@ -563,9 +563,6 @@ packages/
   testing       shared event/test helpers
 apps/web        Vite + React workspace SPA
 ```
-
-(`packages/ui` is an unused scaffold from an earlier plan — the workspace's
-components live in `apps/web` instead.)
 
 ## Documentation
 

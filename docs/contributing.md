@@ -15,7 +15,6 @@
 - Every package exposes its public API only through `src/index.ts`.
 - Never import another package's internals (`@novaos/x/src/...`). Import the root: `@novaos/x`.
 - Domain packages must not import React, the DOM, Monaco, Zustand, or other UI libraries.
-- `@novaos/ui` must not import any workspace (domain) package.
 - `@novaos/shared` depends on no other workspace package.
 - The package graph must stay acyclic.
 
