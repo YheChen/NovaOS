@@ -10,9 +10,9 @@ The specifications describe the event system in two slightly different places:
 
 - `02-system-architecture.md` §6 lists `packages/events` as its own package, and §10.1
   describes a `DomainEvent` with a `timestamp: SimTime` field plus `causationId`.
-- `08-agent-orchestration-v2.md` (Agent 07) places the event bus at
-  `packages/shared/src/events`, and §16 defines the cross-agent `NovaEvent` integration
-  contract with a `tick: number` field (no `timestamp`).
+- The integration contract in the orchestration spec placed the event bus at
+  `packages/shared/src/events` and defined a `NovaEvent` with a `tick: number`
+  field (no `timestamp`).
 
 These must be reconciled into a single canonical contract before any domain package
 emits events, because every package and the UI depend on the event shape.

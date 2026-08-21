@@ -3,7 +3,6 @@
 **Document:** 03-virtual-machine.md  
 **Version:** 2.0  
 **Status:** Execution-ready technical specification  
-**Primary consumer:** Claude Code / UltraCode VM, CPU, assembler, debugger, and testing agents  
 
 ---
 

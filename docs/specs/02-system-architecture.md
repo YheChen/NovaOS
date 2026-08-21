@@ -3,13 +3,12 @@
 **Document:** 02-system-architecture.md  
 **Version:** 2.0  
 **Status:** Execution-ready architecture specification  
-**Primary consumer:** Claude Code / UltraCode multi-agent implementation team  
 
 ---
 
 ## 1. Purpose
 
-This document defines the technical architecture of NovaOS. It specifies the monorepo layout, package boundaries, runtime architecture, state model, event bus, dependency rules, extensibility mechanisms, error handling strategy, and implementation contracts that all agents must follow.
+This document defines the technical architecture of NovaOS. It specifies the monorepo layout, package boundaries, runtime architecture, state model, event bus, dependency rules, extensibility mechanisms, error handling strategy, and implementation contracts that every package must follow.
 
 NovaOS is a browser-native operating systems laboratory. Its architecture must support deterministic simulation, rich visualization, debugging, replay, and modular extension.
 
@@ -31,7 +30,7 @@ NovaOS architecture must satisfy the following goals:
 6. Efficient visualization of high-frequency events.
 7. Replayable execution traces.
 8. Extensibility for future features such as paging, networking, multicore, and plugins.
-9. Developer clarity for a large multi-agent implementation workflow.
+9. Developer clarity for a large, parallel implementation workflow.
 
 ---
 

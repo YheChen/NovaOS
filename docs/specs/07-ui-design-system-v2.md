@@ -2066,20 +2066,7 @@ Use typed mock snapshots while runtime packages are in progress, but mocks must 
 
 ---
 
-# 48. Agent Ownership Recommendations
-
-Relevant agents:
-
-- Agent 40: Design System Agent
-- Agent 41: Workspace Layout Agent
-- Agent 42: Editor Agent
-- Agent 43: Terminal UI Agent
-- Agent 44: Memory Visualization Agent
-- Agent 45: CPU and Process UI Agent
-- Agent 46: Debugger UI Agent
-- Agent 47: Tutorial and Examples Agent
-- Agent 49: Performance and Accessibility Agent
-- Agent 50: Release and Demo Agent
+# 48. Suggested Implementation Sequencing
 
 Suggested sequencing:
 
@@ -2088,7 +2075,7 @@ Suggested sequencing:
 3. Runtime panels after CPU/kernel/memory contracts stabilize.
 4. Debugger UI after debugger core and source maps.
 5. Tutorials after examples and basic workflows exist.
-6. Accessibility and performance agents active throughout UI phase.
+6. Accessibility and performance work runs throughout the UI phase.
 
 ---
 
