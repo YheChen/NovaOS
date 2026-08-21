@@ -1297,7 +1297,7 @@ Required actions:
 
 Before destructive reset, show confirmation.
 
-In Claude Code implementation, avoid destructive browser storage operations without explicit user action.
+Avoid destructive browser-storage operations without explicit user action.
 
 ---
 
@@ -1483,20 +1483,7 @@ Do not implement pipes or scripting before the core command execution model is s
 
 ---
 
-# 37. Agent Ownership Recommendations
-
-Relevant agents:
-
-- Agent 24: Filesystem Core
-- Agent 25: File Operations
-- Agent 26: Filesystem Persistence
-- Agent 27: Shell Parser
-- Agent 28: Shell Builtins
-- Agent 29: Terminal Runtime
-- Agent 42: Editor
-- Agent 43: Terminal UI
-- Agent 47: Tutorials and Examples
-- Agent 48: Testing and QA
+# 37. Suggested Implementation Sequencing
 
 Suggested parallelization:
 

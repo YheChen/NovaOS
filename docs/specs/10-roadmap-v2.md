@@ -13,13 +13,7 @@ Depends On:
 - 05-filesystem-shell-v2.md
 - 06-compiler-debugger-v2.md
 - 07-ui-design-system-v2.md
-- 08-agent-orchestration-v2.md
 - 09-testing-devops-v2.md
-
-Primary Consumer:
-- Claude Code
-- NovaOS technical lead
-- 50-agent orchestration team
 
 ---
 
@@ -39,8 +33,6 @@ It defines:
 - release phases
 - future roadmap
 - public launch readiness
-
-The roadmap is designed for Claude Code coordinating a large multi-agent build.
 
 The project should not be built as a random collection of features.
 
@@ -285,18 +277,6 @@ These features are valuable, but v1 must first deliver the core learning loop.
 
 Create a clean, scalable monorepo foundation.
 
-## Primary Agents
-
-- Agent 01 Program Manager
-- Agent 02 Staff Architect
-- Agent 03 API Contract Architect
-- Agent 04 Monorepo Infrastructure
-- Agent 06 Shared Types
-- Agent 07 Event Bus
-- Agent 08 Determinism
-- Agent 09 Error and Diagnostic
-- Agent 48 Testing and QA
-
 ## Deliverables
 
 Repository structure:
@@ -393,16 +373,6 @@ Milestone 0 is about foundation.
 
 Execute a tiny deterministic instruction stream and emit inspectable events.
 
-## Primary Agents
-
-- Agent 11 CPU Register
-- Agent 12 Instruction Decoder
-- Agent 13 Instruction Execution
-- Agent 14 VM Pipeline
-- Agent 15 VM Exception
-- Agent 16 Memory Core
-- Agent 48 Testing and QA
-
 ## Required Instructions
 
 - `MOV`
@@ -494,17 +464,6 @@ No UI beyond a minimal console/debug harness required.
 
 Turn the VM into a small operating system runtime with boot, processes, scheduler, syscalls, and context switches.
 
-## Primary Agents
-
-- Agent 17 Allocator
-- Agent 18 Stack and Heap
-- Agent 19 Kernel Core
-- Agent 20 Process Manager
-- Agent 21 Scheduler
-- Agent 22 Syscall
-- Agent 23 Interrupt
-- Agent 48 Testing and QA
-
 ## Deliverables
 
 - kernel boot state machine
@@ -575,16 +534,6 @@ A temporary program runner API is acceptable.
 ## Objective
 
 Give users a familiar OS interface through a virtual filesystem and shell.
-
-## Primary Agents
-
-- Agent 24 Filesystem Core
-- Agent 25 File Operations
-- Agent 26 Filesystem Persistence
-- Agent 27 Shell Parser
-- Agent 28 Shell Builtins
-- Agent 29 Terminal Runtime
-- Agent 48 Testing and QA
 
 ## Deliverables
 
@@ -694,14 +643,6 @@ Pipes, redirects, shell scripts, and job control are optional/future.
 
 Let users write NovaASM files, assemble them into bytecode, and run them as processes.
 
-## Primary Agents
-
-- Agent 35 Assembler
-- Agent 36 Source Map
-- Agent 22 Syscall
-- Agent 28 Shell Builtins
-- Agent 48 Testing and QA
-
 ## Deliverables
 
 - NovaASM lexer/parser
@@ -769,16 +710,6 @@ No advanced assembler directives required.
 ## Objective
 
 Compile a small C-like language into NovaASM and bytecode.
-
-## Primary Agents
-
-- Agent 30 Toy C Lexer Parser
-- Agent 31 Semantic Analysis
-- Agent 32 IR
-- Agent 33 Optimization
-- Agent 34 Assembly Generation
-- Agent 36 Source Map
-- Agent 48 Testing and QA
 
 ## Deliverables
 
@@ -862,14 +793,6 @@ Defer arrays, pointers, structs, full strings, preprocessor, includes, and advan
 
 Make execution inspectable, controllable, and rewindable.
 
-## Primary Agents
-
-- Agent 37 Debugger Core
-- Agent 38 Breakpoints and Watches
-- Agent 39 Timeline and Replay
-- Agent 36 Source Map
-- Agent 48 Testing and QA
-
 ## Deliverables
 
 Debugger:
@@ -946,18 +869,6 @@ Advanced reverse debugging, conditional watch language, and complex local variab
 
 Deliver the polished NovaOS browser experience.
 
-## Primary Agents
-
-- Agent 40 Design System
-- Agent 41 Workspace Layout
-- Agent 42 Editor
-- Agent 43 Terminal UI
-- Agent 44 Memory Visualization
-- Agent 45 CPU and Process UI
-- Agent 46 Debugger UI
-- Agent 49 Performance and Accessibility
-- Agent 48 Testing and QA
-
 ## Deliverables
 
 - design tokens
@@ -1030,14 +941,6 @@ Prioritize a polished core flow over many unfinished panels.
 
 Turn NovaOS from a tool into an educational platform.
 
-## Primary Agents
-
-- Agent 05 Documentation Lead
-- Agent 47 Tutorials and Examples
-- Agent 50 Release and Demo
-- Agent 49 Performance and Accessibility
-- Agent 48 Testing and QA
-
 ## Deliverables
 
 Tutorials:
@@ -1109,14 +1012,6 @@ Expected outcome:
 ## Objective
 
 Stabilize for public launch.
-
-## Primary Agents
-
-- Agent 01 Program Manager
-- Agent 48 Testing and QA
-- Agent 49 Performance and Accessibility
-- Agent 50 Release and Demo
-- all relevant feature agents for bug fixes
 
 ## Deliverables
 
@@ -1647,7 +1542,6 @@ Interview talking points:
 - debugger state machine
 - UI virtualization
 - accessibility for complex visualizations
-- multi-agent orchestration
 
 ---
 
@@ -2033,79 +1927,25 @@ The architecture should support this, but v1 should not try to build all of it.
 
 ---
 
-# 33. Implementation Guidance for Claude Code
+# 33. Implementation Sequencing
 
-When starting implementation, Claude Code should follow this sequence:
+The build order that the milestones above imply:
 
-1. Read all specifications.
-2. Produce architecture summary.
-3. Produce dependency graph.
-4. Produce task registry.
-5. Produce package ownership map.
-6. Produce first wave agent briefs.
-7. Implement Milestone 0 only.
-8. Validate.
-9. Implement Milestone 1 only.
-10. Validate.
-11. Continue milestone by milestone.
+1. Read the specification set end to end.
+2. Settle the architecture summary and the dependency graph.
+3. Derive the task list and package ownership from that graph.
+4. Implement one milestone at a time, validating before moving on.
 
-Do not jump ahead to UI polish before runtime works.
+Hard ordering constraints:
 
-Do not implement Toy C before assembler works.
-
-Do not implement advanced debugger UI before debugger core works.
-
-Do not implement tutorials before workflows exist.
+- Do not polish the UI before the runtime works.
+- Do not implement Toy C before the assembler works.
+- Do not implement the debugger UI before the debugger core works.
+- Do not implement tutorials before the workflows they teach exist.
 
 ---
 
-# 34. First Claude Code Prompt
-
-Use this prompt to begin the real build:
-
-```markdown
-Read the NovaOS specification files in order.
-
-Do not implement code yet.
-
-Produce:
-
-1. a concise architecture summary
-2. a dependency graph
-3. package ownership map
-4. task registry grouped by milestone
-5. quality gates
-6. first wave agent briefs for Milestone 0
-7. risks and unresolved questions
-
-After that, wait for approval before implementation.
-```
-
-Second prompt:
-
-```markdown
-Implement Milestone 0: Repository Foundation.
-
-Activate only the foundation agents described in 08-agent-orchestration-v2.md.
-
-Create the monorepo, shared types, event bus, diagnostics, deterministic utilities, testing harness, lint/typecheck/build scripts, and CI skeleton.
-
-Keep changes small and keep the build green.
-```
-
-Third prompt:
-
-```markdown
-Implement Milestone 1: Minimal Virtual Machine.
-
-Do not start kernel, filesystem, compiler, or UI work yet except for contracts needed by the VM.
-
-Deliver a deterministic VM that can execute MOV, ADD, PRINT, and HALT with tests and event emission.
-```
-
----
-
-# 35. Success Metrics
+# 34. Success Metrics
 
 Technical success:
 
@@ -2145,7 +1985,7 @@ Open-source success:
 
 ---
 
-# 36. Common Roadmap Failure Modes
+# 35. Common Roadmap Failure Modes
 
 ## Failure: Building too much UI too early
 
@@ -2209,7 +2049,7 @@ Use cut lines aggressively.
 
 ---
 
-# 37. Final v1 Definition of Done
+# 36. Final v1 Definition of Done
 
 NovaOS v1 is complete when:
 
@@ -2236,7 +2076,7 @@ NovaOS v1 is complete when:
 
 ---
 
-# 38. Final Principle
+# 37. Final Principle
 
 NovaOS should be built like a ladder.
 

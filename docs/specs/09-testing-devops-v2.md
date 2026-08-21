@@ -13,7 +13,6 @@ Depends On:
 - 05-filesystem-shell-v2.md
 - 06-compiler-debugger-v2.md
 - 07-ui-design-system-v2.md
-- 08-agent-orchestration-v2.md
 
 Primary Packages / Areas:
 - `tests/`
@@ -1255,11 +1254,13 @@ Does this affect performance budgets?
 
 ---
 
-# 34. Agent QA Responsibilities
+# 34. QA Responsibilities
 
-From `08-agent-orchestration-v2.md`, Agent 48 owns testing and QA, but every agent owns tests for their own work.
+Testing is owned collectively: every package owns tests for its own behavior, and
+the repository-level harness is maintained alongside them. A change is not done
+because it compiles - it is done when its tests would catch its own regression.
 
-Agent 48 responsibilities:
+Harness and CI:
 
 - maintain test harnesses
 - review test quality
@@ -1269,7 +1270,7 @@ Agent 48 responsibilities:
 - report failing gates
 - prevent shallow tests from counting as done
 
-Agent 49 responsibilities:
+Performance and accessibility:
 
 - performance audits
 - accessibility audits
@@ -1278,9 +1279,9 @@ Agent 49 responsibilities:
 - high contrast checks
 - memory grid/timeline profiling
 
-Agent 50 responsibilities:
+Release readiness:
 
-- release readiness
+- release readiness review
 - README polish
 - demo scripts
 - deployment verification
@@ -1492,7 +1493,7 @@ Testing, DevOps, security, and performance systems are complete when:
 - documentation quality gates exist
 - bug and regression policies are documented
 - public release checklist is actionable
-- Agent 48, 49, and 50 have clear ownership
+- testing, performance, and release readiness each have a clear owner
 - main branch remains buildable and demoable
 
 ---

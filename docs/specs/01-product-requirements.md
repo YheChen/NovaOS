@@ -4,7 +4,6 @@
 **Version:** 2.0  
 **Status:** Execution-ready draft  
 **Owner:** NovaOS Product + Systems Architecture  
-**Primary consumer:** Claude Code / UltraCode multi-agent implementation team  
 **Project type:** Browser-based interactive operating systems laboratory  
 
 ---
