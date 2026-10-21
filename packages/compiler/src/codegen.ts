@@ -1,6 +1,7 @@
 import { diagnostic, type Diagnostic, type SourceSpan } from '@novaos/shared';
 import type { BinaryOperator } from './ast';
 import type { IRFunction, IRInstruction, IRModule, IRTerminator } from './ir';
+import { allocateTempSlots } from './slots';
 
 export interface CodegenResult {
   readonly asm: string;
@@ -71,7 +72,11 @@ function lowerFunction(
     slotStart[l.id] = localSlots;
     localSlots += l.size;
   }
-  const slotCount = localSlots + fn.tempCount;
+  // Temporaries share a slot whenever their live ranges do not overlap, so the
+  // frame is sized by how many values are live at once rather than by how many
+  // expressions the function contains.
+  const allocation = allocateTempSlots(fn);
+  const slotCount = localSlots + allocation.slotCount;
   if (slotCount > MAX_SLOTS) {
     diagnostics.push(
       diagnostic({
@@ -87,7 +92,10 @@ function lowerFunction(
   const frameBytes = slotCount * 4;
   const off = (slot: number): number => -4 * (slot + 1);
   const localOff = (localId: number): number => off(slotStart[localId] ?? localId);
-  const tempOff = (tempId: number): number => off(localSlots + tempId);
+  const tempOff = (tempId: number): number => {
+    const slot = allocation.slotOf[tempId];
+    return off(localSlots + (slot !== undefined && slot >= 0 ? slot : 0));
+  };
 
   emit(`${fn.name}:`, fn.sourceSpan);
   // Prologue.

@@ -12,6 +12,7 @@ export * from './semantics';
 export * from './ir';
 export * from './ir-gen';
 export * from './optimize';
+export * from './slots';
 export * from './codegen';
 export * from './source-map';
 export * from './compile';
