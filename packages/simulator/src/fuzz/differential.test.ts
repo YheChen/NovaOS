@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { createSeededRandom } from '@novaos/shared';
-import { compileToyC, type CompilationResult } from '@novaos/compiler';
+import { compileToyC, type CompilationResult, type ProgramNode } from '@novaos/compiler';
 import { createNovaRuntime } from '../runtime';
 import { generateProgram } from './generator';
-import { interpret } from './interpreter';
+import { interpret, InterpreterTrap } from './interpreter';
 
 /**
  * Seeds to explore. Each one is an independent, reproducible program, so the
- * default range is a fixed corpus that gates every CI run in about a second
- * per pass. Widen it to go hunting:
+ * default range is a fixed corpus that gates every CI run in a few seconds.
+ * Widen it to go hunting:
  *
  *   NOVAOS_FUZZ_SEEDS=20000 pnpm exec vitest run packages/simulator/src/fuzz
  *   NOVAOS_FUZZ_START=20001 NOVAOS_FUZZ_SEEDS=20000 ...
@@ -24,21 +24,51 @@ const LAST_SEED = FIRST_SEED + SEED_COUNT - 1;
 const TIMEOUT_MS = Math.max(60_000, SEED_COUNT * 80);
 
 /**
- * The v1 code generator never reuses a stack slot, so a large enough function
- * exhausts the 32-slot frame. That is a known limitation rather than a defect,
- * so those programs are skipped - but only a handful should be, otherwise the
- * generator is producing programs too big to test anything.
+ * The step cap both sides run under. A generated program with three levels of
+ * nested loops can outlast it, and a truncated run is not comparable to a
+ * complete one - its output is only a prefix of the real output - so those
+ * seeds are skipped rather than reported as disagreements.
+ */
+const MAX_STEPS = 2_000_000;
+
+/**
+ * The v1 code generator sizes a frame by how many temporaries are live at
+ * once, but a function can still outgrow the 32-slot frame. That is a known
+ * limitation rather than a defect, so those programs are skipped - though only
+ * a handful should be, otherwise the generator is producing programs too large
+ * to test anything.
  */
 const SLOT_LIMIT = /needs \d+ stack slots/;
 
-function run(result: CompilationResult): string {
+interface Execution {
+  readonly output: string;
+  readonly completed: boolean;
+}
+
+function run(result: CompilationResult): Execution {
   const bytecode = result.bytecode;
   if (!bytecode) throw new Error('compilation produced no bytecode');
-  const runtime = createNovaRuntime({ scheduler: 'round-robin', quantumTicks: 64 });
+  const runtime = createNovaRuntime({
+    scheduler: 'round-robin',
+    quantumTicks: 64,
+    maxSteps: MAX_STEPS,
+  });
   runtime.boot();
   runtime.spawn('fuzz', { entryPoint: bytecode.entryPoint, code: bytecode.code });
-  runtime.run();
-  return runtime.getOutput();
+  const outcome = runtime.run();
+  return { output: runtime.getOutput(), completed: outcome.steps < MAX_STEPS };
+}
+
+/** Interpret, or report that the program outlasted the interpreter's budget. */
+function reference(ast: ProgramNode): Execution {
+  try {
+    return { output: interpret(ast, MAX_STEPS).output, completed: true };
+  } catch (error) {
+    if (error instanceof InterpreterTrap && error.code === 'interpreter/step-budget') {
+      return { output: '', completed: false };
+    }
+    throw error;
+  }
 }
 
 function errorsOf(result: CompilationResult): string {
@@ -48,11 +78,15 @@ function errorsOf(result: CompilationResult): string {
     .join('; ');
 }
 
+/** Keep a failure message readable when the program printed thousands of lines. */
+const excerpt = (text: string): string => JSON.stringify(text.slice(0, 400));
+
 describe('Toy C differential fuzzing', () => {
   it(
     `agrees with the reference interpreter across ${SEED_COUNT} generated programs`,
     () => {
       let skipped = 0;
+      let tooLong = 0;
       let compared = 0;
       let printedLines = 0;
 
@@ -72,25 +106,31 @@ describe('Toy C differential fuzzing', () => {
         const ast = compiled.ast;
         if (!ast) throw new Error(`seed ${seed} compiled without an AST`);
 
-        const expected = interpret(ast).output;
+        const expected = reference(ast);
         const actual = run(compiled);
 
-        if (actual !== expected) {
+        if (!expected.completed || !actual.completed) {
+          tooLong += 1;
+          continue;
+        }
+
+        if (actual.output !== expected.output) {
           throw new Error(
             `seed ${seed}: the VM and the reference interpreter disagree.\n` +
-              `interpreter: ${JSON.stringify(expected)}\n` +
-              `vm:          ${JSON.stringify(actual)}\n\n${source}`,
+              `interpreter: ${excerpt(expected.output)}\n` +
+              `vm:          ${excerpt(actual.output)}\n\n${source}`,
           );
         }
 
         compared += 1;
-        printedLines += expected === '' ? 0 : expected.trimEnd().split('\n').length;
+        printedLines += expected.output === '' ? 0 : expected.output.trimEnd().split('\n').length;
       }
 
       // Guard against the suite quietly degrading into a no-op.
-      expect(compared).toBeGreaterThan(SEED_COUNT * 0.8);
+      expect(compared).toBeGreaterThan(SEED_COUNT * 0.7);
       expect(printedLines).toBeGreaterThan(compared);
       expect(skipped).toBeLessThan(SEED_COUNT * 0.2);
+      expect(tooLong).toBeLessThan(SEED_COUNT * 0.1);
     },
     TIMEOUT_MS,
   );
@@ -118,18 +158,23 @@ describe('Toy C differential fuzzing', () => {
         const withPasses = run(optimized);
         const withoutPasses = run(unoptimized);
 
-        if (withPasses !== withoutPasses) {
+        // Optimized code executes fewer instructions, so a program near the
+        // step cap can complete one way and be truncated the other. Only
+        // compare runs that both reached the end.
+        if (!withPasses.completed || !withoutPasses.completed) continue;
+
+        if (withPasses.output !== withoutPasses.output) {
           throw new Error(
             `seed ${seed}: optimization changed the program's behaviour.\n` +
-              `optimized:   ${JSON.stringify(withPasses)}\n` +
-              `unoptimized: ${JSON.stringify(withoutPasses)}\n\n${source}`,
+              `optimized:   ${excerpt(withPasses.output)}\n` +
+              `unoptimized: ${excerpt(withoutPasses.output)}\n\n${source}`,
           );
         }
 
         compared += 1;
       }
 
-      expect(compared).toBeGreaterThan(SEED_COUNT * 0.8);
+      expect(compared).toBeGreaterThan(SEED_COUNT * 0.7);
     },
     TIMEOUT_MS,
   );
